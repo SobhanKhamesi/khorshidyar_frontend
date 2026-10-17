@@ -1,0 +1,134 @@
+@font-face {
+  font-family: IRANSans;
+  src: url("../fonts/iransans/IRANSansWeb_Light.woff") format("woff");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: IRANSans;
+  src: url("../fonts/iransans/IRANSansWeb.woff") format("woff");
+  font-style: normal;
+  font-weight: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: IRANSans;
+  src: url("../fonts/iransans/IRANSansWeb_Medium.woff") format("woff");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: Gohar;
+  src: url("../fonts/gohar/Gohar-Black.woff") format("woff");
+  font-weight: 900;
+}
+
+@font-face {
+  font-family: Gohar;
+  src: url("../fonts/gohar/Gohar-Bold.woff") format("woff");
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: Gohar;
+  src: url("../fonts/gohar/Gohar-Light.woff") format("woff");
+  font-weight: 300;
+}
+
+@font-face {
+  font-family: Gohar;
+  src: url("../fonts/gohar/Gohar-Medium.woff") format("woff");
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: Gohar;
+  src: url("../fonts/gohar/Gohar-Thin.woff") format("woff");
+  font-weight: 100;
+}
+
+body {
+  font-family: IRANSans, Tahoma, sans-serif !important;
+}
+
+
+a, a:hover {
+  text-decoration: none;
+}
+
+.side-bar-nav a, .side-bar-nav a:hover {
+  color: black;
+}
+
+.q-expansion-item__container .q-expansion-item__content {
+  background: #F5F5F5;
+}
+
+.q-item:hover .q-item__label, .q-item:hover .q-expansion-item__toggle-icon, .q-item:hover .q-item__section .q-icon {
+  color: var(--q-color-primary);
+}
+
+[dir=rtl] .q-field__messages {
+  text-align: left;
+  direction: ltr;
+}
+
+.apexcharts-tooltip {
+  direction: ltr !important;
+}
+
+.apexcharts-tooltip-marker {
+  margin-left: 0 !important;
+  margin-right: 10px !important;
+}
+
+
+.container-fluid {
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.vh-100 {
+  height: 100vh !important;
+}
+
+.flex-row-reverse {
+  -ms-flex-direction: row-reverse !important;
+  flex-direction: row-reverse !important;
+}
+
+.font-gohar {
+  font-family: Gohar, IRANSans, Tahoma, sans-serif !important;
+}
+
+
+.border-radius-card, .border-radius-table, .border-radius-step {
+  border-radius: 15px !important;
+}
+
+.dialog-card {
+  min-width: 400px !important;
+  border-radius: 15px !important;
+}
+.dialog-card-big {
+  max-width: 600px !important;
+  width: 100%;
+  border-radius: 15px !important;
+}
+.dialog-card-big2 {
+  max-width: 1000px !important;
+  width: 100%;
+  border-radius: 15px !important;
+}
+.dialog-card-big-x {
+  max-width: 800px !important;
+  width: 100%;
+  border-radius: 15px !important;
+}

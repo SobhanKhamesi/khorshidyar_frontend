@@ -1,0 +1,32 @@
+.q-field--outlined .q-field__control:before, .q-field--focused, .q-field--outlined .q-field__control {
+  border-radius: 10px !important;
+}
+
+.q-field--outlined .q-field__control:before {
+  border: 1.5px solid #E4E9F2 !important;
+}
+
+.q-field--highlighted .q-field__label {
+  color: #868686 !important;
+  font-style: normal;
+  font-weight: normal;
+}
+
+
+.q-checkbox__bg {
+  background: #FFFFFF;
+  border: 1px solid #E1E1E1;
+  border-radius: 7px;
+}
+
+.q-checkbox__bg .absolute-full, .q-checkbox__bg .fullscreen, .q-checkbox__bg .fixed-full {
+  top: 4px !important;
+  left: 4px !important;
+  width: 10px !important;
+  height: 10px !important;
+}
+
+
+.q-stepper__step-inner{
+  padding-top: 0 !important;
+}
