@@ -208,19 +208,6 @@ const routes = [
                 {path: '/list/normal', name: 'RemindersList', component: () => import('pages/Reminders/List.vue')},
             ]),
 
-            ...routesWithPrefix('/work-calendar', [
-                {
-                    path: '/index',
-                    name: 'WorkCalendarIndex',
-                    component: () => import('pages/WorkCalendars/InstallersCalendarOverview.vue')
-                },
-                {
-                    path: '/installer',
-                    name: 'InstallerCalendar',
-                    component: () => import('pages/WorkCalendars/InstallerCalendar.vue')
-                },
-            ]),
-
             ...routesWithPrefix('/install-services', [
                 {
                     path: '/create',

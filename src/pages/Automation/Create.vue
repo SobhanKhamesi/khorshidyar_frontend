@@ -26,16 +26,16 @@
             </div>
             <div class="col-md-6 col-xs-12 q-gutter-y-md">
               <q-select
-                  option-label="fullName"
-                  option-value="id"
-                  outlined
-                  v-model="customer_id"
-                  clearable
-                  use-input
-                  label="مشتری"
-                  :options="customersAndLeadsOptions"
-                  @filter="filterCustomers"
-                  behavior="dialog">
+                option-label="fullName"
+                option-value="id"
+                outlined
+                v-model="customer_id"
+                clearable
+                use-input
+                label="مشتری"
+                :options="customersAndLeadsOptions"
+                @filter="filterCustomers"
+                behavior="dialog">
 
                 <template v-slot:after>
                   <q-btn @click.prevent="newCustomerDlg = true" icon="person_add" dense flat rounded/>
@@ -64,16 +64,16 @@
             </div>
             <div class="col-md-6 col-xs-12 q-gutter-y-md">
               <q-select
-                  option-label="name"
-                  option-value="id"
-                  outlined
-                  v-model="expert_id"
-                  clearable
-                  use-input
-                  label="کارشناس فنی"
-                  :options="technicalExpertOptions"
-                  @filter="filterTechnicalExperts"
-                  behavior="dialog">
+                option-label="name"
+                option-value="id"
+                outlined
+                v-model="expert_id"
+                clearable
+                use-input
+                label="کارشناس فنی"
+                :options="technicalExpertOptions"
+                @filter="filterTechnicalExperts"
+                behavior="dialog">
 
                 <template v-slot:no-option>
                   <q-item>
@@ -89,13 +89,13 @@
         <q-card-section>
           <div class="text-subtitle1 q-mb-md">فرم بازدید</div>
           <q-select
-              outlined
-              clearable
-              emit-value
-              map-options
-              v-model="surveyType"
-              label="نوع کارشناسی"
-              :options="surveyTypeOptions"
+            outlined
+            clearable
+            emit-value
+            map-options
+            v-model="surveyType"
+            label="نوع کارشناسی"
+            :options="surveyTypeOptions"
           />
         </q-card-section>
 
@@ -110,20 +110,55 @@
                         label="هدف مشتری" :options="homeGoalOptions"/>
             </div>
 
-            <div class="col-md-6 col-xs-12">
+            <div class="col-md-4 col-xs-12">
               <q-checkbox v-model="home.meter.single.selected" label="کنتور تک فاز"/>
-              <q-input v-if="home.meter.single.selected" class="q-mt-sm" dense outlined type="number"
-                       v-model.number="home.meter.single.count" label="تعداد"/>
+              <template v-if="home.meter.single.selected">
+                <q-input class="q-mt-sm" dense outlined type="number"
+                         v-model.number="home.meter.single.count" label="تعداد"/>
+                <q-input class="q-mt-sm" dense outlined dir="ltr" type="number" suffix="آمپر"
+                         v-model.number="home.meter.single.amp" label="مقدار آمپر"/>
+              </template>
             </div>
-            <div class="col-md-6 col-xs-12">
+            <div class="col-md-4 col-xs-12">
               <q-checkbox v-model="home.meter.three.selected" label="کنتور سه فاز"/>
-              <q-input v-if="home.meter.three.selected" class="q-mt-sm" dense outlined type="number"
-                       v-model.number="home.meter.three.count" label="تعداد"/>
+              <template v-if="home.meter.three.selected">
+                <q-input class="q-mt-sm" dense outlined type="number"
+                         v-model.number="home.meter.three.count" label="تعداد"/>
+                <q-input class="q-mt-sm" dense outlined dir="ltr" type="number" suffix="آمپر"
+                         v-model.number="home.meter.three.amp" label="مقدار آمپر"/>
+              </template>
+            </div>
+            <div class="col-md-4 col-xs-12">
+              <q-checkbox v-model="home.meter.demand.selected" label="کنتور دیماندی (عادی)"/>
+              <template v-if="home.meter.demand.selected">
+                <q-input class="q-mt-sm" dense outlined type="number"
+                         v-model.number="home.meter.demand.count" label="تعداد"/>
+                <q-input class="q-mt-sm" dense outlined dir="ltr" type="number" suffix="آمپر"
+                         v-model.number="home.meter.demand.amp" label="مقدار آمپر"/>
+              </template>
+            </div>
+
+            <div class="col-md-6 col-xs-12">
+              <q-input outlined dir="ltr" v-model="home.billId" label="شناسه قبض"/>
+            </div>
+
+            <div class="col-md-6 col-xs-12">
+              <q-select outlined emit-value map-options clearable
+                        v-model="home.installLocation.type"
+                        label="محل نصب دستگاه"
+                        :options="installLocationOptions"/>
+            </div>
+            <div class="col-md-6 col-xs-12" v-if="home.installLocation.type">
+              <q-input outlined dir="ltr" type="number" suffix="متر"
+                       v-model.number="home.installLocation.distance" label="مقدار فاصله"/>
             </div>
 
             <div class="col-12">
-              <q-input outlined autogrow v-model="home.installLocationNote" type="textarea"
-                       label="تخمین محل نصب دستگاه"/>
+              <div class="q-mb-xs">نیاز به زیرساخت اضافه دارد؟</div>
+              <q-radio v-model="home.needsExtraInfrastructure" :val="true" label="دارد"/>
+              <q-radio v-model="home.needsExtraInfrastructure" :val="false" label="ندارد"/>
+              <q-input v-if="home.needsExtraInfrastructure" class="q-mt-sm" outlined autogrow type="textarea"
+                       v-model="home.extraInfrastructureNote" label="توضیحات زیرساخت اضافه"/>
             </div>
 
             <div class="col-md-6 col-xs-12">
@@ -192,12 +227,12 @@
               <!-- کولر گازی: چند مورد با ظرفیت/نوع/تعداد -->
               <q-checkbox v-model="home.consumers.gasCooler.selected" label="کولر گازی" class="q-mt-md"/>
               <q-table
-                  v-if="home.consumers.gasCooler.selected"
-                  flat bordered dense class="q-mt-sm"
-                  :rows-per-page-options="[0]"
-                  :rows="home.consumers.gasCooler.items"
-                  :columns="gasCoolerColumns"
-                  no-data-label="آیتمی ثبت نشده">
+                v-if="home.consumers.gasCooler.selected"
+                flat bordered dense class="q-mt-sm"
+                :rows-per-page-options="[0]"
+                :rows="home.consumers.gasCooler.items"
+                :columns="gasCoolerColumns"
+                no-data-label="آیتمی ثبت نشده">
                 <template v-slot:body="props">
                   <q-tr :props="props">
                     <q-td key="size" :props="props">{{ props.row.size }}</q-td>
@@ -230,11 +265,11 @@
 
             <div class="col-12">
               <q-select
-                  multiple use-chips outlined use-input
-                  v-model="home.outageItems"
-                  label="اقلام مصرفی در زمان قطعی برق"
-                  :options="outageItemsFilteredOptions"
-                  @filter="filterOutageItems">
+                multiple use-chips outlined use-input
+                v-model="home.outageItems"
+                label="اقلام مصرفی در زمان قطعی برق"
+                :options="outageItemsFilteredOptions"
+                @filter="filterOutageItems">
                 <template v-slot:no-option>
                   <q-item>
                     <q-item-section class="text-grey">ابتدا مصرف کننده ها را انتخاب کنید</q-item-section>
@@ -278,11 +313,19 @@
             </div>
 
             <div class="col-md-6 col-xs-12">
-              <q-select outlined v-model="industrial.meterType" label="نوع کنتور" :options="['تک فاز', 'سه فاز']"/>
+              <q-select outlined v-model="industrial.meterType" label="نوع کنتور"
+                        :options="['تک فاز', 'سه فاز', 'دیماندی (عادی)']"/>
+            </div>
+            <div class="col-md-6 col-xs-12" v-if="industrial.meterType">
+              <q-input outlined dir="ltr" type="number" suffix="آمپر" v-model.number="industrial.meterAmp"
+                       label="مقدار آمپر"/>
             </div>
             <div class="col-md-6 col-xs-12">
               <q-input outlined dir="ltr" type="number" suffix="کیلووات" v-model.number="industrial.branchCapacity"
                        label="قسمت انشعاب"/>
+            </div>
+            <div class="col-md-6 col-xs-12">
+              <q-input outlined dir="ltr" v-model="industrial.billId" label="شناسه قبض"/>
             </div>
 
             <div class="col-12">
@@ -312,11 +355,11 @@
 
             <div class="col-12">
               <q-table
-                  flat bordered title="مصرف کننده های اصلی"
-                  :rows-per-page-options="[0]"
-                  :rows="industrial.mainConsumers"
-                  :columns="mainConsumerColumns"
-                  no-data-label="آیتمی ثبت نشده">
+                flat bordered title="مصرف کننده های اصلی"
+                :rows-per-page-options="[0]"
+                :rows="industrial.mainConsumers"
+                :columns="mainConsumerColumns"
+                no-data-label="آیتمی ثبت نشده">
                 <template v-slot:body="props">
                   <q-tr :props="props">
                     <q-td key="name" :props="props">{{ props.row.name }}</q-td>
@@ -531,6 +574,69 @@ const consumerLabels = {
   waterCooler: 'کولر آبی',
 }
 
+const defaultHome = () => ({
+  goals: [],
+  meter: {
+    single: {selected: false, count: null, amp: null},
+    three: {selected: false, count: null, amp: null},
+    demand: {selected: false, count: null, amp: null}
+  },
+  billId: '',
+  installLocation: {type: null, distance: null},
+  needsExtraInfrastructure: null,
+  extraInfrastructureNote: '',
+  hasInternalPanel: null,
+  connectionPoint: '',
+  cableLength: null,
+  panelLocationNote: '',
+  panelPhotos: null,
+  consumers: {
+    fridge: {selected: false, count: null},
+    lighting: {selected: false, watt: null},
+    tv: {selected: false},
+    rollingDoor: {selected: false, count: null},
+    gasCooler: {selected: false, items: []},
+    waterCooler: {selected: false, type: null, count: null},
+    waterPump: {selected: false},
+    elevator: {selected: false, type: null},
+    cctv: {selected: false, count: null}
+  },
+  outageItems: [],
+  nightDuration: null,
+  systemType: '',
+  mainDecisionMaker: '',
+  hasLimitation: null,
+  description: ''
+})
+
+const defaultIndustrial = () => ({
+  goals: [],
+  meterType: '',
+  meterAmp: null,
+  billId: '',
+  branchCapacity: null,
+  hasDedicatedTransformer: null,
+  outagePerWeek: null,
+  outageHoursEach: null,
+  outageTime: '',
+  outageEffects: [],
+  mainConsumers: [],
+  requiredPhotos: [],
+  mustStayOnEquipment: '',
+  damageAtMoment: null,
+  damagePerHour: null,
+  nightBackupDuration: '',
+  installLocation: '',
+  hasDieselGenerator: null,
+  dieselCapacity: null,
+  dieselFuelConsumption: null,
+  dieselWorkingHours: null,
+  systemPreference: '',
+  paymentType: '',
+  finalDecisionMaker: '',
+  description: ''
+})
+
 export default {
 
   name: "CreateAutomation",
@@ -572,36 +678,12 @@ export default {
       outageItemsMasterList: [],
       outageItemsFilteredOptions: [],
 
-      home: {
-        goals: [],
-        meter: {
-          single: {selected: false, count: null},
-          three: {selected: false, count: null}
-        },
-        installLocationNote: '',
-        hasInternalPanel: null,
-        connectionPoint: '',
-        cableLength: null,
-        panelLocationNote: '',
-        panelPhotos: null,
-        consumers: {
-          fridge: {selected: false, count: null},
-          lighting: {selected: false, watt: null},
-          tv: {selected: false},
-          rollingDoor: {selected: false, count: null},
-          gasCooler: {selected: false, items: []},
-          waterCooler: {selected: false, type: null, count: null},
-          waterPump: {selected: false},
-          elevator: {selected: false, type: null},
-          cctv: {selected: false, count: null}
-        },
-        outageItems: [],
-        nightDuration: null,
-        systemType: '',
-        mainDecisionMaker: '',
-        hasLimitation: null,
-        description: ''
-      },
+      home: defaultHome(),
+
+      installLocationOptions: [
+        {label: 'فاصله نیروگاه تا محل نصب اینورتر/سانورتر', value: 'plant_to_inverter'},
+        {label: 'فاصله نصب دستگاه تا اینورتر/سانورتر', value: 'device_to_inverter'}
+      ],
 
       newGasCoolerDlg: false,
       newGasCooler: {size: '18', inverter: false, count: 1},
@@ -612,31 +694,7 @@ export default {
         {name: 'action', label: 'عملیات', field: 'action', align: 'center'}
       ],
 
-      industrial: {
-        goals: [],
-        meterType: '',
-        branchCapacity: null,
-        hasDedicatedTransformer: null,
-        outagePerWeek: null,
-        outageHoursEach: null,
-        outageTime: '',
-        outageEffects: [],
-        mainConsumers: [],
-        requiredPhotos: [],
-        mustStayOnEquipment: '',
-        damageAtMoment: null,
-        damagePerHour: null,
-        nightBackupDuration: '',
-        installLocation: '',
-        hasDieselGenerator: null,
-        dieselCapacity: null,
-        dieselFuelConsumption: null,
-        dieselWorkingHours: null,
-        systemPreference: '',
-        paymentType: '',
-        finalDecisionMaker: '',
-        description: ''
-      },
+      industrial: defaultIndustrial(),
 
       newMainConsumerDlg: false,
       newMainConsumer: {name: '', power: null, type: 'موتوری', starterType: 'ساده'},
@@ -656,15 +714,15 @@ export default {
       immediate: true,
       handler(newVal) {
         const selectedLabels = Object.keys(consumerLabels)
-            .filter((key) => newVal[key]?.selected)
-            .map((key) => consumerLabels[key])
+          .filter((key) => newVal[key]?.selected)
+          .map((key) => consumerLabels[key])
 
         this.outageItemsMasterList = selectedLabels
         this.outageItemsFilteredOptions = selectedLabels
 
         // حذف موارد قبلاً انتخاب‌شده‌ای که دیگه معتبر نیستن
         this.home.outageItems = this.home.outageItems.filter((item) =>
-            selectedLabels.includes(item)
+          selectedLabels.includes(item)
         )
       }
     }
@@ -702,24 +760,24 @@ export default {
         }
         const needle = val.toLowerCase()
         this.outageItemsFilteredOptions = this.outageItemsMasterList.filter((v) =>
-            v.toLowerCase().includes(needle)
+          v.toLowerCase().includes(needle)
         )
       })
     },
 
     getCustomersAndLeads() {
       api.get('customers/all')
-          .then(response => {
-            this.customersAndLeadsOptions = response.data.data
-            this.customersAndLeads = response.data.data
-          })
+        .then(response => {
+          this.customersAndLeadsOptions = response.data.data
+          this.customersAndLeads = response.data.data
+        })
     },
     getTechnicalExperts() {
       api.get('technical_experts')
-          .then(response => {
-            this.technicalExpertOptions = response.data.data
-            this.technicalExperts = response.data.data
-          })
+        .then(response => {
+          this.technicalExpertOptions = response.data.data
+          this.technicalExperts = response.data.data
+        })
     },
     moneyFormat(digits) {
       return (("" + digits).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"));
@@ -739,26 +797,26 @@ export default {
 
 
       api.post('customers/quick-add', payload)
-          .then(response => {
+        .then(response => {
 
 
-            this.$q.notify({
-              timeout: 3000,
-              position: 'center',
-              type: 'positive',
-              message: response.data.message
-            })
-
-            this.getCustomersAndLeads();
-            this.newCustomerContactNumber = ''
-            this.newCustomerName = ''
-            this.newCustomerGender = 0
-            this.newCustomerDlg = false
-            this.$q.loading.hide();
+          this.$q.notify({
+            timeout: 3000,
+            position: 'center',
+            type: 'positive',
+            message: response.data.message
           })
-          .catch(() => {
-            this.$q.loading.hide();
-          });
+
+          this.getCustomersAndLeads();
+          this.newCustomerContactNumber = ''
+          this.newCustomerName = ''
+          this.newCustomerGender = 0
+          this.newCustomerDlg = false
+          this.$q.loading.hide();
+        })
+        .catch(() => {
+          this.$q.loading.hide();
+        });
 
     },
     filterTechnicalExperts(val, update) {
@@ -772,7 +830,7 @@ export default {
       update(() => {
         const needle = val.toLowerCase()
         this.technicalExpertOptions = this.technicalExperts.filter(
-            v => v.name.toLowerCase().indexOf(needle) > -1
+          v => v.name.toLowerCase().indexOf(needle) > -1
         )
       })
     },
@@ -786,7 +844,7 @@ export default {
       update(() => {
         const needle = val.toLowerCase()
         this.customersAndLeadsOptions = this.customersAndLeads.filter(
-            v => v.name.toLowerCase().indexOf(needle) > -1
+          v => v.name.toLowerCase().indexOf(needle) > -1
         )
       })
     },
@@ -812,8 +870,8 @@ export default {
 
       // آبجکت survey (بدون فایل‌ها) به‌صورت JSON
       const surveyData = this.surveyType === 1
-          ? {...this.home}
-          : (this.surveyType === 2 ? {...this.industrial} : null)
+        ? {...this.home}
+        : (this.surveyType === 2 ? {...this.industrial} : null)
 
       // فایل‌ها رو از آبجکت survey جدا می‌کنیم تا جدا append بشن
       if (this.surveyType === 1) {
@@ -841,83 +899,29 @@ export default {
       api.post('automation/store', formData, {
         headers: {'Content-Type': 'multipart/form-data'}
       })
-          .then(response => {
-            this.$q.notify({
-              timeout: 3000,
-              position: 'center',
-              type: 'positive',
-              message: response.data.message
-            })
-
-            this.visitDate = ''
-            this.customer_id = ''
-            this.expert_id = ''
-            this.description = ''
-            this.surveyType = null
-            this.home = {
-              goals: [],
-              meter: {
-                single: {selected: false, count: null},
-                three: {selected: false, count: null}
-              },
-              installLocationNote: '',
-              hasInternalPanel: null,
-              connectionPoint: '',
-              cableLength: null,
-              panelLocationNote: '',
-              panelPhotos: null,
-              consumers: {
-                fridge: {selected: false, count: null},
-                lighting: {selected: false, watt: null},
-                tv: {selected: false},
-                rollingDoor: {selected: false, count: null},
-                gasCooler: {selected: false, items: []},
-                waterCooler: {selected: false, type: null, count: null},
-                waterPump: {selected: false},
-                elevator: {selected: false, type: null},
-                cctv: {selected: false, count: null}
-              },
-              outageItems: [],
-              nightDuration: null,
-              systemType: '',
-              mainDecisionMaker: '',
-              hasLimitation: null,
-              description: ''
-            }
-
-            this.industrial = {
-              goals: [],
-              meterType: '',
-              branchCapacity: null,
-              hasDedicatedTransformer: null,
-              outagePerWeek: null,
-              outageHoursEach: null,
-              outageTime: '',
-              outageEffects: [],
-              mainConsumers: [],
-              requiredPhotos: [],
-              mustStayOnEquipment: '',
-              damageAtMoment: null,
-              damagePerHour: null,
-              nightBackupDuration: '',
-              installLocation: '',
-              hasDieselGenerator: null,
-              dieselCapacity: null,
-              dieselFuelConsumption: null,
-              dieselWorkingHours: null,
-              systemPreference: '',
-              paymentType: '',
-              finalDecisionMaker: '',
-              description: ''
-            }
-            this.$q.loading.hide()
+        .then(response => {
+          this.$q.notify({
+            timeout: 3000,
+            position: 'center',
+            type: 'positive',
+            message: response.data.message
           })
-          .catch(() => {
-            this.$q.loading.hide()
-          })
-          .finally(() => {
-            this.sendSmsDlg = false;
-          });
+
+          this.visitDate = ''
+          this.customer_id = ''
+          this.expert_id = ''
+          this.description = ''
+          this.surveyType = null
+          this.home = defaultHome()
+          this.industrial = defaultIndustrial()
+          this.$q.loading.hide()
+        })
+        .catch(() => {
+          this.$q.loading.hide()
+        })
+        .finally(() => {
+          this.sendSmsDlg = false;
+        });
     }
   },
   created() {

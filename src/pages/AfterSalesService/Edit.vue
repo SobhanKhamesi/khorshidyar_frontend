@@ -204,19 +204,7 @@
                   </q-input>
                 </div>
 
-                <div class="col-md-1 col-xs-12 flex flex-center">
-                  <q-btn
-                      round
-                      flat
-                      color="primary"
-                      icon="event_available"
-                      :disable="!selectedInstaller"
-                      @click.prevent="openInstallerCalendar">
-                    <q-tooltip>تقویم کاری نصاب</q-tooltip>
-                  </q-btn>
-                </div>
               </div>
-
             </q-card-section>
           </q-card>
         </div>
@@ -319,100 +307,6 @@
             <q-btn color="accent" rounded label="ثبت" type="submit"/>
           </q-card-actions>
         </q-form>
-      </q-card>
-    </q-dialog>
-
-    <q-dialog v-model="installerCalendarDlg">
-      <q-card class="dialog-card-big">
-        <q-card-section>
-          <div class="text-h6">
-            تقویم کاری نصاب
-            <span v-if="selectedInstaller" class="text-grey text-subtitle2">
-          ({{ selectedInstaller.name }})
-        </span>
-          </div>
-        </q-card-section>
-        <q-separator/>
-
-        <q-card-section>
-          <div v-if="installerCalendarLoading" class="text-center text-grey q-pa-md">
-            در حال دریافت اطلاعات...
-          </div>
-
-          <div v-else>
-            <div class="text-subtitle2 q-mb-sm">روزهای کاری</div>
-
-            <q-list bordered separator dense v-if="installerWorkingDays.length">
-              <q-item v-for="day in installerWorkingDays" :key="day.weekday">
-                <q-item-section>{{ weekdayLabel(day.weekday) }}</q-item-section>
-                <q-item-section side>
-                  <q-badge :color="day.is_active ? 'positive' : 'grey-5'">
-                    {{ day.is_active ? 'فعال' : 'غیرفعال' }}
-                  </q-badge>
-                </q-item-section>
-                <q-item-section side v-if="day.is_active" class="text-grey-8" dir="ltr">
-                  {{ (day.start_time || '').substring(0, 5) }} - {{ (day.end_time || '').substring(0, 5) }}
-                </q-item-section>
-              </q-item>
-            </q-list>
-            <div v-else class="text-grey text-caption">
-              برای این نصاب روز کاری ثبت نشده است
-            </div>
-
-            <q-separator class="q-my-md"/>
-
-            <div class="row items-center justify-between q-mb-sm">
-              <div class="text-subtitle2">
-                وضعیت روز انتخابی
-                <span v-if="installerDate" class="text-grey-7">({{ installerDate }})</span>
-              </div>
-              <q-btn
-                  v-if="installerDate"
-                  flat dense round icon="refresh"
-                  @click="fetchInstallerDayAvailability(selectedInstaller.id, installerDate)">
-                <q-tooltip>بروزرسانی</q-tooltip>
-              </q-btn>
-            </div>
-
-            <div v-if="!installerDate" class="text-grey text-caption">
-              برای مشاهده‌ی ساعت کاری و نوبت‌های رزرو شده، ابتدا تاریخ نصب را در فرم انتخاب کنید
-            </div>
-            <div v-else-if="installerDayAvailabilityLoading" class="text-center text-grey q-pa-md">
-              در حال دریافت اطلاعات روز...
-            </div>
-            <div v-else-if="installerDayAvailability && !installerDayAvailability.is_working_day"
-                 class="text-negative text-caption">
-              این تاریخ جزو روزهای کاری نصاب نیست
-            </div>
-            <div v-else-if="installerDayAvailability">
-              <div class="text-caption text-grey-8 q-mb-sm" dir="ltr">
-                ساعت کاری: {{ installerDayAvailability.work_start }} - {{ installerDayAvailability.work_end }}
-              </div>
-              <div class="text-caption text-grey-8 q-mb-sm">رزرو های روز انتخابی : </div>
-              <div v-if="!installerDayAvailability.busy.length" class="text-grey text-caption">
-                در حال حاضر نوبت رزرو شده‌ای برای این روز ثبت نشده است
-              </div>
-              <div v-else class="row q-gutter-sm">
-                <q-chip
-                    v-for="(range, index) in installerDayAvailability.busy"
-                    :key="index"
-                    color="grey-5"
-                    text-color="white">
-                  {{ range.start }} - {{ range.end }}
-                </q-chip>
-              </div>
-
-              <div class="text-caption text-grey-7 q-mt-sm">
-                ساعت شروع/پایانی که در فرم وارد می‌کنید باید در بازه‌ی ساعت کاری بالا و خارج
-                از بازه‌های رزرو شده باشد.
-              </div>
-            </div>
-          </div>
-        </q-card-section>
-
-        <q-card-actions align="center">
-          <q-btn outline rounded color="accent" label="بستن" v-close-popup/>
-        </q-card-actions>
       </q-card>
     </q-dialog>
 
@@ -560,38 +454,6 @@ export default {
   },
 
   methods: {
-    openInstallerCalendar() {
-      if (!this.selectedInstaller) return
-      this.installerCalendarDlg = true
-      this.installerWorkingDays = []
-      this.installerDayAvailability = null
-      this.installerCalendarLoading = true
-      api.get(`installer-working-days/${this.selectedInstaller.id}`)
-          .then(response => {
-            this.installerWorkingDays = response.data.data
-          })
-          .catch(this.notifyError)
-          .finally(() => { this.installerCalendarLoading = false })
-      if (this.installerDate) {
-        this.fetchInstallerDayAvailability(this.selectedInstaller.id, this.installerDate)
-      }
-    },
-
-    // فقط جهت نمایش اطلاعاتی (ساعت کاری نصاب + بازه‌های از قبل رزرو شده)؛
-    // هیچ بازه‌ی آماده‌ای برای کلیک/انتخاب نمی‌سازد. کاربر همچنان خودش ساعت
-    // شروع و پایان دلخواه را در فرم تایپ می‌کند.
-    fetchInstallerDayAvailability(installerId, date) {
-      if (!installerId || !date) return
-      this.installerDayAvailabilityLoading = true
-      api.get(`installer-appointments/available-slots/${installerId}`, {
-        params: {date}
-      })
-          .then(response => {
-            this.installerDayAvailability = response.data.data
-          })
-          .catch(this.notifyError)
-          .finally(() => { this.installerDayAvailabilityLoading = false })
-    },
 
     onInstallerContextChanged() {
       this.installerDayAvailability = null

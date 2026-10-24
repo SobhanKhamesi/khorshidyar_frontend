@@ -248,18 +248,6 @@
 
     <q-expansion-item
         group="side-bar-nav"
-        icon="eva-calendar-outline"
-        label="تقویم کاری">
-      <q-item v-ripple clickable :to="{ name: 'WorkCalendarIndex' }">
-        <q-item-section>تقویم کلی</q-item-section>
-      </q-item>
-      <q-item v-ripple clickable :to="{ name: 'InstallerCalendar' }">
-        <q-item-section>ثبت تقویم کاری نصاب</q-item-section>
-      </q-item>
-    </q-expansion-item>
-
-    <q-expansion-item
-        group="side-bar-nav"
         icon="bi-repeat"
         label="مدیریت ارجاع به کاربران">
       <q-item v-ripple clickable :to="{ name: 'TicketCreate' }">

@@ -123,7 +123,7 @@
                 <div class="text-caption text-grey-8 q-mb-xs">{{ role.label }}</div>
                 <div class="row q-col-gutter-md items-start">
 
-                  <div class="col-md-4 col-xs-12">
+                  <div class="col-md-5 col-xs-12">
                     <q-select
                         option-label="name"
                         option-value="id"
@@ -144,7 +144,7 @@
                     </q-select>
                   </div>
 
-                  <div class="col-md-2 col-xs-6">
+                  <div class="col-md-3 col-xs-6">
                     <q-input mask="####/##/##" outlined dense dir="ltr"
                              v-model="installers[role.key].date" label="تاریخ نصب"
                              @update:model-value="onInstallerContextChanged(role)">
@@ -189,18 +189,6 @@
                         </q-icon>
                       </template>
                     </q-input>
-                  </div>
-
-                  <div class="col-md-2 col-xs-12 flex flex-center">
-                    <q-btn
-                        round
-                        flat
-                        color="primary"
-                        icon="event_available"
-                        :disable="!installers[role.key].installer"
-                        @click.prevent="openInstallerCalendar(role)">
-                      <q-tooltip>تقویم کاری نصاب</q-tooltip>
-                    </q-btn>
                   </div>
 
                 </div>
@@ -448,145 +436,12 @@
       </q-card>
     </q-dialog>
 
-    <!--
-      این دیالوگ صرفاً اطلاعاتی است: روزهای کاری نصاب و بازه‌های از قبل رزرو
-      شده‌ی او را نشان می‌دهد. هیچ آیتم از پیش آماده‌ای برای کلیک/انتخاب
-      ساعت نصب وجود ندارد؛ ساعت شروع/پایان همیشه با تایپ خود کاربر در فرم
-      اصلی وارد می‌شود.
-    -->
-    <q-dialog v-model="installerCalendarDlg">
-      <q-card class="dialog-card-big">
-        <q-card-section>
-          <div class="text-h6">
-            تقویم کاری نصاب
-            <span v-if="installerCalendarTarget" class="text-grey text-subtitle2">
-              ({{ installerCalendarTarget.label }})
-            </span>
-          </div>
-        </q-card-section>
-        <q-separator/>
-
-        <q-card-section>
-          <div v-if="installerCalendarLoading" class="text-center text-grey q-pa-md">
-            در حال دریافت اطلاعات...
-          </div>
-
-          <div v-else>
-            <div class="text-subtitle2 q-mb-sm">روزهای کاری</div>
-
-            <q-list bordered separator dense v-if="installerWorkingDays.length">
-              <q-item v-for="day in installerWorkingDays" :key="day.weekday">
-                <q-item-section>{{ weekdayLabel(day.weekday) }}</q-item-section>
-                <q-item-section side>
-                  <q-badge :color="day.is_active ? 'positive' : 'grey-5'">
-                    {{ day.is_active ? 'فعال' : 'غیرفعال' }}
-                  </q-badge>
-                </q-item-section>
-                <q-item-section side v-if="day.is_active" class="text-grey-8" dir="ltr">
-                  {{ (day.start_time || '').substring(0, 5) }} - {{ (day.end_time || '').substring(0, 5) }}
-                </q-item-section>
-              </q-item>
-            </q-list>
-            <div v-else class="text-grey text-caption">
-              برای این نصاب روز کاری ثبت نشده است
-            </div>
-
-            <q-separator class="q-my-md"/>
-
-            <div class="row items-center justify-between q-mb-sm">
-              <div class="text-subtitle2">
-                وضعیت روز انتخابی
-                <span v-if="installerCalendarTarget && installers[installerCalendarTarget.key].date"
-                      class="text-grey-7">
-                  ({{ installers[installerCalendarTarget.key].date }})
-                </span>
-              </div>
-              <q-btn
-                  v-if="installerCalendarTarget && installers[installerCalendarTarget.key].date"
-                  flat dense round icon="refresh"
-                  @click="fetchInstallerDayAvailability(installers[installerCalendarTarget.key].installer.id, installers[installerCalendarTarget.key].date)">
-                <q-tooltip>بروزرسانی</q-tooltip>
-              </q-btn>
-            </div>
-
-            <div v-if="!installerCalendarTarget || !installers[installerCalendarTarget.key].date"
-                 class="text-grey text-caption">
-              برای مشاهده‌ی ساعت کاری و نوبت‌های رزرو شده، ابتدا تاریخ نصب را در فرم انتخاب کنید
-            </div>
-            <div v-else-if="installerDayAvailabilityLoading" class="text-center text-grey q-pa-md">
-              در حال دریافت اطلاعات روز...
-            </div>
-            <div v-else-if="installerDayAvailability && !installerDayAvailability.is_working_day"
-                 class="text-negative text-caption">
-              این تاریخ جزو روزهای کاری نصاب نیست
-            </div>
-            <div v-else-if="installerDayAvailability">
-              <div class="text-caption text-grey-8 q-mb-sm" dir="ltr">
-                ساعت کاری: {{ installerDayAvailability.work_start }} - {{ installerDayAvailability.work_end }}
-              </div>
-
-              <div v-if="!installerDayAvailability.busy.length" class="text-grey text-caption">
-                در حال حاضر نوبت رزرو شده‌ای برای این روز ثبت نشده است
-              </div>
-              <div v-else class="row q-gutter-sm">
-                <q-chip
-                    v-for="(range, index) in installerDayAvailability.busy"
-                    :key="index"
-                    square
-                    :color="chipColor(range.type)"
-                    text-color="white">
-                  {{ range.start }} - {{ range.end }} ({{ range.type_label }})
-                </q-chip>
-              </div>
-
-              <!-- راهنمای رنگ‌ها، دقیقاً هم‌رنگ با تقویم کاری نصاب -->
-              <div v-if="installerDayAvailability.busy.length" class="row q-col-gutter-sm items-center q-mt-sm">
-                <div
-                    v-for="item in legendItems"
-                    :key="item.role"
-                    class="row items-center q-mr-md q-mb-xs">
-                  <q-chip dense square :color="item.color" text-color="white" class="q-mr-xs" style="width: 16px; min-width: 16px; height: 16px;"/>
-                  <span class="text-caption">{{ item.label }}</span>
-                </div>
-              </div>
-
-              <div class="text-caption text-grey-7 q-mt-sm">
-                ساعت شروع/پایانی که در فرم وارد می‌کنید باید در بازه‌ی ساعت کاری بالا و خارج از
-                بازه‌های رزرو شده باشد.
-              </div>
-            </div>
-          </div>
-        </q-card-section>
-
-        <q-card-actions align="center">
-          <q-btn outline rounded color="accent" label="بستن" v-close-popup/>
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
   </q-page>
 </template>
 
 <script>
 import {QSpinnerPuff} from "quasar";
 import {api} from 'boot/axios'
-
-// همان پالت رنگی و برچسب‌های تقویم کاری نصاب (InstallerCalendar.vue /
-// InstallersCalendarOverview.vue)، تا نمایش بازه‌های رزرو شده در این فرم
-// دقیقاً با تقویم کاری هم‌خوانی داشته باشد.
-const TYPE_COLORS = {
-  panel: 'primary',
-  wiring: 'orange',
-  commissioning: 'teal',
-  after_sale: 'purple',
-}
-
-const TYPE_LABELS = {
-  panel: 'نصب پنل',
-  wiring: 'نصب سیم‌کشی',
-  commissioning: 'نصب و راه‌اندازی',
-  after_sale: 'خدمات پس از فروش',
-}
 
 export default {
   name: "EditInstallationService",
@@ -599,12 +454,6 @@ export default {
       // تا زمانی که اطلاعات سرویس از بک‌اند در فرم پر می‌شود، این پرچم true
       // است تا onCustomerSelected/onPurchaseSourceChange فرم را ریست نکنند.
       isHydrating: false,
-
-      legendItems: Object.keys(TYPE_LABELS).map(role => ({
-        role,
-        label: TYPE_LABELS[role],
-        color: TYPE_COLORS[role],
-      })),
 
       customer_id: null,
       status: null,
@@ -875,70 +724,6 @@ export default {
           .catch((error) => {
             this.$q.loading.hide();
           });
-    },
-
-    weekdayLabel(weekday) {
-      const labels = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه']
-      return labels[weekday] ?? '-'
-    },
-
-    chipColor(role) {
-      return TYPE_COLORS[role] || 'grey'
-    },
-
-    openInstallerCalendar(role) {
-      const installer = this.installers[role.key].installer
-      if (!installer) return
-
-      this.installerCalendarTarget = role
-      this.installerCalendarDlg = true
-      this.installerWorkingDays = []
-      this.installerDayAvailability = null
-      this.installerCalendarLoading = true
-
-      api.get(`installer-working-days/${installer.id}`)
-          .then(response => {
-            this.installerWorkingDays = response.data.data
-          })
-          .catch()
-          .finally(() => {
-            this.installerCalendarLoading = false
-          })
-
-      if (this.installers[role.key].date) {
-        this.fetchInstallerDayAvailability(installer.id, this.installers[role.key].date)
-      }
-    },
-
-    // فقط جهت نمایش اطلاعاتی (ساعت کاری نصاب + بازه‌های از قبل رزرو شده)؛
-    // هیچ بازه‌ی آماده‌ای برای کلیک/انتخاب نمی‌سازد. کاربر همچنان خودش ساعت
-    // شروع و پایان دلخواه را در فرم تایپ می‌کند.
-    fetchInstallerDayAvailability(installerId, date) {
-      if (!installerId || !date) return
-
-      this.installerDayAvailabilityLoading = true
-      api.get(`installer-appointments/available-slots/${installerId}`, {
-        params: {date: date}
-      })
-          .then(response => {
-            this.installerDayAvailability = response.data.data
-          })
-          .catch()
-          .finally(() => {
-            this.installerDayAvailabilityLoading = false
-          })
-    },
-
-    onInstallerContextChanged(role) {
-      this.installerDayAvailability = null
-      const item = this.installers[role.key]
-      if (this.installerCalendarDlg
-          && this.installerCalendarTarget
-          && this.installerCalendarTarget.key === role.key
-          && item.installer
-          && item.date) {
-        this.fetchInstallerDayAvailability(item.installer.id, item.date)
-      }
     },
 
     fetchService() {
