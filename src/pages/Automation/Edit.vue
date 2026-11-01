@@ -61,6 +61,14 @@
                 </template>
               </q-select>
             </div>
+            <div v-if="customer_id && customer_id.referrer != null" class="col-md-6 col-xs-12 q-gutter-y-md">
+              <q-input outlined
+                       type="number"
+                       dir="ltr" maxlength="3"
+                       v-model="introducerPercent"
+                       label="درصد معرف از این فروش"
+              />
+            </div>
             <div class="col-md-6 col-xs-12 q-gutter-y-md">
               <q-select
                 option-label="name"
@@ -576,6 +584,7 @@ export default {
 
       invoiceDate: '',
       customer_id: '',
+      introducerPercent: '',
       description: '',
       expert_id: '',
 
@@ -935,6 +944,9 @@ export default {
 
           this.invoiceDate = data.jalali_date
           this.customer_id = data.customer
+
+          this.introducerPercent = data.referrer_percent
+
           this.expert_id = data.expert
           this.description = data.description
           // survey_type از بک اند به صورت عددی (1 یا 2) می آید
@@ -962,6 +974,7 @@ export default {
       formData.append('id', this.$route.params.id)
       formData.append('date', this.invoiceDate)
       formData.append('customer', this.customer_id.id)
+      formData.append('referrer_percent', this.introducerPercent)
       formData.append('description', this.description || '')
       formData.append('surveyType', this.surveyType)
       formData.append('expert', this.expert_id.id)

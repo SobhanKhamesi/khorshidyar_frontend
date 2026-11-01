@@ -51,6 +51,15 @@
               </template>
             </q-select>
           </div>
+          <div v-if="customer_id && customer_id.referrer_id" class="col-md-6 col-xs-12 q-gutter-y-md">
+            <q-input outlined
+                     type="number"
+                     dir="ltr" min="0" max="100"
+                     v-model="introducerPercent"
+                     label="درصد معرف از این فروش"
+                     hint="پیش‌فرض از تعریف مشتری؛ فقط برای همین پروژه اعمال می‌شود"
+            />
+          </div>
           <div class="col-12 q-gutter-y-md">
 
             <q-input
@@ -361,6 +370,7 @@ export default {
 
       // ---------- مشتری ----------
       customer_id: null,
+      introducerPercent: '',
       description:'',
       customersAndLeads: [],
       customersAndLeadsOptions: [],
@@ -382,6 +392,12 @@ export default {
       newProductFirstInventory: 0,
       newProductSellingPrice: 0,
       newDescription: '',
+    }
+  },
+  watch: {
+    // درصد پیش‌فرض از تعریف مشتری؛ کاربر می‌تواند آن را فقط برای همین پروژه تغییر دهد
+    customer_id(newVal) {
+      this.introducerPercent = newVal && newVal.referrer_id ? newVal.referrer_percent : ''
     }
   },
   computed: {
@@ -560,6 +576,7 @@ export default {
 
     resetForm() {
       this.customer_id = null
+      this.introducerPercent = ''
       this.invoiceItems = [emptyInvoiceItem(), emptyInvoiceItem(), emptyInvoiceItem()]
     },
 
@@ -586,6 +603,7 @@ export default {
 
       const payload = {
         customer: this.customer_id.id,
+        referrer_percent: this.introducerPercent,
         description: this.description,
         orders: orders
       }

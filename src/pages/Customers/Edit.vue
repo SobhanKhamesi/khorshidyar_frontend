@@ -209,6 +209,13 @@
                 </template>
               </q-select>
 
+              <q-input outlined
+                       v-if="introducer != null"
+                       type="number"
+                       dir="ltr" maxlength="3"
+                       v-model="introducerPercent"
+                       label="درصد معرف"
+              />
 
               <q-select outlined multiple v-model="CommunicationWays" label="راه های ارتباطی"
                         :options="communicationOptions">
@@ -616,6 +623,7 @@ export default {
       customerDisc: '',
 
       introducer: null,
+      introducerPercent: null,
       introducerOptions: [],
       introducers: [],
 
@@ -820,6 +828,7 @@ export default {
           this.nationalCode = response.data.data.national_code
           this.postalCode = response.data.data.postal_code
           this.introducer = response.data.data.referrer
+          this.introducerPercent = response.data.data.referrer_percent
           this.address = response.data.data.address
           this.customerContactNumber = response.data.data.contact_number
           this.customerContactNumber1 = response.data.data.contact_number1
@@ -885,8 +894,10 @@ export default {
       payload.website = this.customerWebSite
       payload.description = this.customerDescription
 
-      if (this.introducer !== null && this.introducer.id !== undefined)
+      if (this.introducer !== null && this.introducer.id !== undefined){
         payload.referrer = this.introducer.id
+        payload.referrer_percent = this.introducerPercent
+      }
 
       payload.persons = this.dataPersons;
 

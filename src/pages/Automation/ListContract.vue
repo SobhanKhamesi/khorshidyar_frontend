@@ -61,6 +61,21 @@
                   @click.prevent="openCustomerInfo(props.row.customer)"
                   :label="props.row.customer.name" dense flat/>
               </q-td>
+              <q-td key="referrer_percent" :props="props">
+                <template v-if="props.row.customer && props.row.customer.referrer_id">
+                  <referrer-percent-edit
+                    v-model="props.row.referrer_percent"
+                    endpoint="automation/referrer-percent"
+                    :payload="{ id: props.row.id }"
+                    hint="فقط برای همین پروژه اعمال می‌شود"
+                    @saved="data => props.row.referrer_income = data.referrer_income"
+                  />
+                  <div v-if="props.row.referrer_income" class="text-caption text-positive">
+                    {{ Number(props.row.referrer_income).toLocaleString('en-US') }} تومان
+                  </div>
+                </template>
+                <span v-else>-</span>
+              </q-td>
               <q-td key="survey_type" :props="props">
                 <q-badge v-if="props.row.survey_type" :color="surveyTypeColor(props.row.survey_type)">
                   {{ surveyTypeLabel(props.row.survey_type) }}
@@ -439,6 +454,7 @@ import SurveyViewDialog from 'components/SurveyViewDialog.vue'
 import PreInvoiceItemsDialog from "components/PreInvoiceItemsDialog.vue";
 import ContractInfoDialog from "components/ContractInfoDialog.vue";
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
+import ReferrerPercentEdit from "components/ReferrerPercentEdit.vue";
 
 
 function wrapCsvValue(val, formatFn) {
@@ -454,7 +470,7 @@ function wrapCsvValue(val, formatFn) {
 
 export default {
   name: "ListNegotiation",
-  components: {CustomerInfoDialog, ContractInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog},
+  components: {ReferrerPercentEdit, CustomerInfoDialog, ContractInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog},
   data() {
     return {
       customerInfoDlg: false,
@@ -514,6 +530,7 @@ export default {
         {name: 'sabtKonande', align: 'center', label: 'ثبت شده توسط'},
         {name: 'invoice_number', field: 'invoice_number', align: 'center', label: 'شماره فاکتور'},
         {name: 'customer_name', field: 'customer_name', align: 'center', label: 'مشتری'},
+        {name: 'referrer_percent', field: 'referrer_percent', align: 'center', label: 'درصد معرف'},
         {name: 'survey_type', field: 'survey_type', align: 'center', label: 'نوع کارشناسی'},
         {name: 'final_price', field: 'final_price', align: 'center', label: 'مبلغ (تومان)'},
         {name: 'date', field: 'date', align: 'center', label: 'تاریخ', sortable: true},

@@ -36,7 +36,7 @@
                        :label="leadType === 1 ? 'شناسه ملی ' : 'کد ملی '"/>
 
               <q-input v-if="leadType === 0" mask="####/##/##" outlined dir="ltr" v-model="leadBirthdate"
-                       label="تاریخ تولد" >
+                       label="تاریخ تولد">
                 <template v-slot:prepend>
                   <q-icon name="event" class="cursor-pointer">
                     <q-popup-proxy transition-show="scale" transition-hide="scale">
@@ -114,15 +114,15 @@
               </q-select>
 
               <q-select
-                  option-label="name"
-                  option-value="id"
-                  outlined
-                  clearable
-                  v-model="introducer"
-                  label="معرف"
-                  :options="introducerOptions"
-                  use-input
-                  @filter="filterFn">
+                option-label="name"
+                option-value="id"
+                outlined
+                clearable
+                v-model="introducer"
+                label="معرف"
+                :options="introducerOptions"
+                use-input
+                @filter="filterFn">
 
                 <template v-slot:no-option>
                   <q-item>
@@ -137,6 +137,14 @@
                          rounded/>
                 </template>
               </q-select>
+
+              <q-input outlined
+                       v-if="introducer != null"
+                       type="number"
+                       dir="ltr" maxlength="3"
+                       v-model="introducerPercent"
+                       label="درصد معرف"
+              />
 
 
               <q-select v-if="leadType === 0"
@@ -388,19 +396,19 @@
           <q-card-section>
             <q-card-section>
               <q-input
-                  v-model="introducerName"
-                  label="نام معرف *"
-                  outlined
-                  dense
+                v-model="introducerName"
+                label="نام معرف *"
+                outlined
+                dense
               />
               <q-input
-                  v-model="introducerDescription"
-                  label="توضیحات"
-                  outlined
-                  dense
-                  type="textarea"
-                  class="q-mt-sm"
-                  rows="3"
+                v-model="introducerDescription"
+                label="توضیحات"
+                outlined
+                dense
+                type="textarea"
+                class="q-mt-sm"
+                rows="3"
               />
             </q-card-section>
           </q-card-section>
@@ -659,6 +667,7 @@ export default {
       leadCategory: null,
       leadSource: null,
       introducer: null,
+      introducerPercent: null,
       leadCity: '',
       showLeadEmail: false,
       leadEmail: '',
@@ -765,24 +774,24 @@ export default {
       }
 
       api.post('referrers/store', payload)
-          .then(response => {
-            this.$q.notify({
-              timeout: 3000,
-              position: 'center',
-              type: 'positive',
-              message: response.data.message
-            })
+        .then(response => {
+          this.$q.notify({
+            timeout: 3000,
+            position: 'center',
+            type: 'positive',
+            message: response.data.message
           })
+        })
 
-          .then(() => {
-            this.introducerName = '';
-            this.introducerDescription = '';
-            this.getIntroducers();
-            this.newIntroducerDlg = false
-          })
-          .finally(() => {
-            this.$q.loading.hide();
-          });
+        .then(() => {
+          this.introducerName = '';
+          this.introducerDescription = '';
+          this.getIntroducers();
+          this.newIntroducerDlg = false
+        })
+        .finally(() => {
+          this.$q.loading.hide();
+        });
     },
 
     toggleNewInput() {
@@ -980,8 +989,10 @@ export default {
       if (this.leadSource !== null && this.leadSource.id !== undefined)
         payload.lead_source = this.leadSource.id
 
-      if (this.introducer !== null && this.introducer.id !== undefined)
+      if (this.introducer !== null && this.introducer.id !== undefined) {
         payload.referrer = this.introducer.id
+        payload.referrer_percent = this.introducerPercent
+      }
 
       payload.disc = this.leadDisc
       payload.whatsapp = this.leadWhatsapp
@@ -1062,6 +1073,7 @@ export default {
           this.province = response.data.data.province
           this.leadSource = response.data.data.source
           this.introducer = response.data.data.referrer
+          this.introducerPercent = response.data.data.referrer_percent
           this.leadContactNumber = response.data.data.contact_number
           this.leadContactNumber1 = response.data.data.contact_number1
           this.leadBirthdate = response.data.data.jalali_birth_date
@@ -1074,7 +1086,7 @@ export default {
           }
           this.leadDescription = response.data.data.description
           this.leadDisc = response.data.data.disc
-          if (response.data.data.lead_status !== null){
+          if (response.data.data.lead_status !== null) {
             this.leadStatus = parseInt(response.data.data.lead_status)
 
           }

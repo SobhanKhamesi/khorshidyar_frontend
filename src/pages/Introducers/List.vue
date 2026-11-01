@@ -124,19 +124,26 @@
               :rows-per-page-options="[10]"
           >
             <template v-slot:top-right>
-              <div v-if="sumInvoicesPrice > 0">
-                مجموع خرید زیر مجموعه ها :
-                {{ moneyFormat(sumInvoicesPrice) + " تومان " }}
+              <div class="q-gutter-x-lg">
+                <span>
+                  مجموع خرید زیر مجموعه ها :
+                  {{ moneyFormat(sumInvoicesPrice) + " تومان " }}
+                </span>
+                <span class="text-positive text-weight-bold">
+                  مجموع دریافتی معرف :
+                  {{ moneyFormat(sumReferrerIncome) + " تومان " }}
+                </span>
               </div>
             </template>
             <template v-slot:body="props">
               <q-tr :props="props">
                 <q-td key="customer_status" :props="props">
                   <q-badge color="primary" v-if="props.row.status === 0" label="سرنخ" />
-                  <q-badge color="secondary" v-else-if="props.row.status === 3" label="مشتری" />
+                  <q-badge color="orange-9" v-else-if="props.row.status === 1" label="فرصت" />
+                  <q-badge color="secondary" v-else label="مشتری" />
                 </q-td>
                 <q-td key="customer_type" :props="props">
-                  <q-badge color="pink-10" v-if="props.row.status === 'legal'" label="حقوقی" />
+                  <q-badge color="pink-10" v-if="props.row.type === 2" label="حقوقی" />
                   <q-badge color="purple-10" v-else label="حقیقی" />
                 </q-td>
                 <q-td key="full_name" :props="props">
@@ -145,14 +152,81 @@
                 <q-td key="contact_number" :props="props">
                   {{ props.row.contact_number || '-' }}
                 </q-td>
+                <q-td key="referrer_percent" :props="props">
+                  <referrer-percent-edit
+                    v-model="props.row.referrer_percent"
+                    :endpoint="'referrers/introduces/percent/' + props.row.id"
+                    hint="فقط برای پروژه‌های جدید این مشتری اعمال می‌شود"
+                  />
+                </q-td>
                 <q-td key="total_purchase" :props="props">
                   {{ moneyFormat(props.row.sum_invoices_price) }}
+                </q-td>
+                <q-td key="referrer_income" :props="props" class="text-positive text-weight-bold">
+                  {{ moneyFormat(props.row.referrer_income) }}
+                </q-td>
+                <q-td key="operation" :props="props">
+                  <q-btn :title="'مشخصات خرید ' + props.row.fullName" dense round color="brown" icon="eva-eye-outline"
+                         @click="openDetailsDlg(props.row)"/>
                 </q-td>
               </q-tr>
             </template>
             <template v-slot:no-data>
               <div class="full-width row flex-center text-grey q-pa-md">
                 هیچ معرف‌شدگانی برای این معرف یافت نشد.
+              </div>
+            </template>
+          </q-table>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <!-- ============ دیالوگ لیست خرید های مشتری معرف ============ -->
+    <q-dialog
+      transition-show="slide-up"
+      transition-hide="slide-down"
+      v-model="customerBuyDetailsDlg"
+    >
+      <q-card class="dialog-card-big-x">
+        <q-card-section>
+          <div class="text-h6">{{ customerBuyDetailsDialogTitle }}</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-table
+            flat bordered
+            class="border-radius-table"
+            :rows="customerBuyDetailsRows"
+            :columns="customerBuyDetailsColumns"
+            :rows-per-page-options="[10]"
+          >
+            <template v-slot:body="props">
+              <q-tr :props="props">
+                <q-td key="invoice_number" :props="props">
+                  {{ props.row.invoice_number }}
+                </q-td>
+                <q-td key="purchase_amount" :props="props">
+                  {{ moneyFormat(props.row.purchase_amount) }}
+                </q-td>
+                <q-td key="purchase_introducer_percent" :props="props">
+                  <referrer-percent-edit
+                    v-model="props.row.purchase_introducer_percent"
+                    endpoint="automation/referrer-percent"
+                    :payload="{ id: props.row.id }"
+                    hint="فقط برای همین پروژه اعمال می‌شود"
+                    @saved="data => onProjectPercentSaved(props.row, data)"
+                  />
+                </q-td>
+                <q-td key="purchase_introducer_income" :props="props" class="text-positive text-weight-bold">
+                  {{ moneyFormat(props.row.purchase_introducer_income) }}
+                </q-td>
+                <q-td key="purchase_date" :props="props">
+                  {{ props.row.purchase_jalali_date }}
+                </q-td>
+              </q-tr>
+            </template>
+            <template v-slot:no-data>
+              <div class="full-width row flex-center text-grey q-pa-md">
+                هیچ خریدی برای این مشتری یافت نشد.
               </div>
             </template>
           </q-table>
@@ -180,9 +254,11 @@
 <script>
 import { api } from 'boot/axios'
 import { QSpinnerPuff } from 'quasar'
+import ReferrerPercentEdit from 'components/ReferrerPercentEdit.vue'
 
 export default {
   name: 'ReferrersList',
+  components: { ReferrerPercentEdit },
   data() {
     return {
       loading: true,
@@ -202,18 +278,35 @@ export default {
       formErrors: { name: '' },
       submitLoading: false,
 
+      customerBuyDetailsDialogTitle : "",
+      customerBuyDetailsDlg : false,
+      customerBuyDetailsRows : [],
+      customerBuyDetailsColumns : [
+        { name: 'invoice_number', field: 'invoice_number', align: 'center', label: 'شماره فاکتور' },
+        { name: 'purchase_amount', field: 'purchase_amount', align: 'center', label: 'مبلغ خرید (تومان)' },
+        { name: 'purchase_introducer_percent', field: 'purchase_introducer_percent', align: 'center', label: 'درصد پروژه' },
+        { name: 'purchase_introducer_income', field: 'purchase_introducer_income', align: 'center', label: 'دریافتی پروژه (تومان)' },
+        { name: 'purchase_date', field: 'purchase_date', align: 'center', label: 'تاریخ خرید' },
+      ],
+
       // دیالوگ معرف‌شدگان
+      selectedReferrerId: null,
       introducesDialog: false,
       introducesDialogTitle: '',
       loadingIntroduces: false,
       sumInvoicesPrice: 0,
+      sumReferrerIncome: 0,
+      detailsCustomer: null,
       introducesRows: [],
       introducesColumns: [
         { name: 'customer_status', field: 'customer_status', align: 'center', label: 'دسته بندی' },
         { name: 'customer_type', field: 'customer_type', align: 'center', label: 'نوع' },
         { name: 'full_name', field: 'full_name', align: 'center', label: 'نام' },
         { name: 'contact_number', field: 'contact_number', align: 'center', label: 'شماره تماس' },
-        { name: 'total_purchase', field: 'total_purchase', align: 'center', label: 'مجموع خرید (تومان)' }
+        { name: 'referrer_percent', field: 'referrer_percent', align: 'center', label: 'درصد معرف' },
+        { name: 'total_purchase', field: 'total_purchase', align: 'center', label: 'مجموع خرید (تومان)' },
+        { name: 'referrer_income', field: 'referrer_income', align: 'center', label: 'دریافتی معرف (تومان)' },
+        { name: 'operation', field: 'operation', align: 'center', label: 'عملیات' },
       ],
 
       // دیالوگ حذف
@@ -225,6 +318,34 @@ export default {
     moneyFormat(digits) {
       if (!digits) return '۰'
       return digits.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    },
+    // ============ مشخصات خرید مشتری ============
+    openDetailsDlg(customer) {
+      this.customerBuyDetailsDialogTitle = 'لیست خرید های : ' + customer.fullName
+      this.customerBuyDetailsDlg = true
+      this.customerBuyDetailsRows = []
+      this.detailsCustomer = customer
+
+      api.get('referrers/introduces/details/' + customer.id)
+        .then(response => {
+          this.customerBuyDetailsRows = response.data.data
+        })
+        .catch(() => {
+          this.$q.notify({ type: 'negative', position: 'center', message: 'خطا در دریافت خرید های مشتری' })
+          this.customerBuyDetailsDlg = false
+        })
+    },
+
+
+    // پس از تغییر درصد یک پروژه، دریافتی همان پروژه و مجموع‌ها به‌روز می‌شوند
+    onProjectPercentSaved(row, data) {
+      const oldIncome = Number(row.purchase_introducer_income) || 0
+      row.purchase_introducer_income = data.referrer_income
+      const diff = (Number(data.referrer_income) || 0) - oldIncome
+      if (this.detailsCustomer) {
+        this.detailsCustomer.referrer_income = (Number(this.detailsCustomer.referrer_income) || 0) + diff
+      }
+      this.sumReferrerIncome += diff
     },
 
     // ============ دریافت لیست معرف‌ها ============
@@ -323,16 +444,19 @@ export default {
       this.introducesDialogTitle = 'لیست معرف‌شدگان: ' + referrerName
       this.introducesDialog = true
       this.loadingIntroduces = true
+      this.selectedReferrerId = referrerId
       this.introducesRows = []
 
       api.get('referrers/introduces/' + referrerId) // مسیر را مطابق با بک‌اند تنظیم کنید
           .then(response => {
             this.sumInvoicesPrice = 0;
+            this.sumReferrerIncome = 0;
 
             this.introducesRows = response.data.data
 
             this.introducesRows.forEach((item) => {
-              this.sumInvoicesPrice += item.sum_invoices_price;
+              this.sumInvoicesPrice += Number(item.sum_invoices_price) || 0;
+              this.sumReferrerIncome += Number(item.referrer_income) || 0;
             });
 
           })

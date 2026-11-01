@@ -62,6 +62,15 @@
                 </template>
               </q-select>
             </div>
+            <div v-if="customer_id && customer_id.referrer != null" class="col-md-6 col-xs-12 q-gutter-y-md">
+              <q-input outlined
+                       type="number"
+                       dir="ltr" maxlength="3"
+                       v-model="introducerPercent"
+                       label="درصد معرف از این فروش"
+              />
+            </div>
+
             <div class="col-md-6 col-xs-12 q-gutter-y-md">
               <q-select
                 option-label="name"
@@ -650,6 +659,7 @@ export default {
 
       visitDate: '',
       customer_id: '',
+      introducerPercent: '',
       expert_id: '',
       description: '',
       newCustomerContactNumber: '',
@@ -725,7 +735,15 @@ export default {
           selectedLabels.includes(item)
         )
       }
+    },
+    // درصد پیش‌فرض از تعریف مشتری؛ کاربر می‌تواند آن را فقط برای همین پروژه تغییر دهد
+    'customer_id': {
+      immediate: true,
+      handler(newVal) {
+        this.introducerPercent = newVal && newVal.referrer_id ? newVal.referrer_percent : ''
+      }
     }
+
   },
   methods: {
     openCustomerInfo(customer) {
@@ -864,6 +882,7 @@ export default {
       // فیلدهای ساده
       formData.append('date', this.visitDate)
       formData.append('customer', this.customer_id.id)
+      formData.append('referrer_percent', this.introducerPercent)
       formData.append('expert', this.expert_id.id)
       formData.append('description', this.description)
       formData.append('surveyType', this.surveyType)
@@ -909,6 +928,7 @@ export default {
 
           this.visitDate = ''
           this.customer_id = ''
+          this.introducerPercent = ''
           this.expert_id = ''
           this.description = ''
           this.surveyType = null

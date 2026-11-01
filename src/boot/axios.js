@@ -2,8 +2,8 @@ import axios from 'axios'
 import {LocalStorage, Notify} from "quasar";
 
 // const api = axios.create({baseURL: 'https://demo3.boomrangcrm.com/v6.1.0/api/'})
-// const api = axios.create({baseURL: 'http://127.0.0.1:8000/api/'})
-const api = axios.create({baseURL: 'https://khrshdyar.ir/v1/api/'})
+const api = axios.create({baseURL: 'http://127.0.0.1:8000/api/'})
+// const api = axios.create({baseURL: 'https://khrshdyar.ir/v1/api/'})
 
 
 if (LocalStorage.getItem('auth')) {

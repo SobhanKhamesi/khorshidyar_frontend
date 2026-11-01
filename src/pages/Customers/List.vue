@@ -122,6 +122,16 @@
               <q-td key="category_title" :props="props">
                 {{ props.row.category !== null ? props.row.category.title : void 0 }}
               </q-td>
+              <q-td key="referrer_percent" :props="props">
+                <referrer-percent-edit
+                  v-if="props.row.referrer_id"
+                  v-model="props.row.referrer_percent"
+                  :endpoint="'referrers/introduces/percent/' + props.row.id"
+                  :title="'معرف: ' + (props.row.referrer ? props.row.referrer.name : '')"
+                  hint="فقط برای پروژه‌های جدید اعمال می‌شود؛ پروژه‌های قبلی درصد خود را حفظ می‌کنند"
+                />
+                <span v-else>-</span>
+              </q-td>
               <q-td key="action" :props="props" class="q-gutter-x-sm">
                 <q-btn title="پیگیری مکالمات" dense round color="indigo" icon="call"
                        @click="callTracking(props.row.id,props.row.name)"/>
@@ -450,6 +460,7 @@ import {exportFile} from 'quasar'
 
 import {QSpinnerPuff} from 'quasar'
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
+import ReferrerPercentEdit from "components/ReferrerPercentEdit.vue";
 
 
 function wrapCsvValue(val, formatFn) {
@@ -465,7 +476,7 @@ function wrapCsvValue(val, formatFn) {
 
 export default {
   name: "CustomersList",
-  components: {CustomerInfoDialog},
+  components: {CustomerInfoDialog, ReferrerPercentEdit},
   watch: {
     customerCategory: function (e) {
       if (e !== null) {
@@ -512,6 +523,7 @@ export default {
         {name: 'contact_number', field: 'contact_number', align: 'center', label: 'تلفن تماس'},
         {name: 'city', field: 'city', align: 'center', label: 'استان'},
         {name: 'category_title', field: 'categoryItem', align: 'center', label: 'دسته بندی'},
+        {name: 'referrer_percent', field: 'referrer_percent', align: 'center', label: 'درصد معرف'},
         {name: 'action', field: 'action', align: 'center', label: 'عملیات'}
       ],
       columnsCalls: [

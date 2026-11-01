@@ -165,6 +165,13 @@
                     </template>
                   </q-select>
 
+                  <q-input outlined
+                           v-if="introducer != null"
+                           type="number"
+                           dir="ltr" maxlength="3"
+                           v-model="introducerPercent"
+                           label="درصد معرف"
+                  />
 
                   <q-select v-if="leadType === 0"
                             outlined
@@ -1163,6 +1170,7 @@ export default {
       leadContactNumber2: '',
       leadSource: null,
       introducer: null,
+      introducerPercent: null,
       leadSourceOptions: [],
       introducerOptions: [],
       introducers: [],
@@ -1669,8 +1677,10 @@ export default {
       payload.contact_number2 = this.leadContactNumber2
       if (this.leadSource !== null && this.leadSource.id !== undefined)
         payload.lead_source = this.leadSource.id
-      if (this.introducer !== null && this.introducer.id !== undefined)
+      if (this.introducer !== null && this.introducer.id !== undefined){
         payload.referrer = this.introducer.id
+        payload.referrer_percent = this.introducerPercent
+      }
       payload.disc = this.leadDisc
       payload.whatsapp = this.leadWhatsapp
       payload.eitaa = this.leadEitaa
@@ -1719,6 +1729,7 @@ export default {
             this.address = '';
             this.leadSource = '';
             this.introducer = '';
+            this.introducerPercent = '';
             this.CommunicationWays = [];
             this.leadDisc = '';
             this.leadWhatsapp = '';
