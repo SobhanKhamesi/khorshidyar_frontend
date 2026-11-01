@@ -14,6 +14,8 @@ const routes = [
     {path: '/survey/:token', component: () => import('pages/AfterSalesService/Survey.vue')},
     // فرم اولیه‌ای که مشتری از طریق لینک پیامک شده تکمیل می‌کند (بدون ورود)
     {path: '/request/:token', component: () => import('pages/IntakeForm.vue')},
+    // مشاهده و امضای دیجیتال قرارداد توسط مشتری (بدون ورود)
+    {path: '/contract/:token', component: () => import('pages/ContractSign.vue')},
     {
         path: '/',
         component: () => import('layouts/MainLayout.vue'),
@@ -152,6 +154,7 @@ const routes = [
                 {path: '/quick-pre-invoice', name: 'CreateQuickPreInvoice', component: () => import('pages/Automation/CreateQuick.vue')},
                 {path: '/create', name: 'CreateRequest', component: () => import('pages/Automation/Create.vue')},
                 {path: '/edit/:id', name: 'EditAutomation', component: () => import('pages/Automation/Edit.vue')},
+                {path: '/contract/:id', name: 'AutomationContract', component: () => import('pages/Automation/Contract.vue')},
                 {path: '/list/final', name: 'ListFinal', component: () => import('pages/Automation/ListFinal.vue')},
                 {
                     path: '/list/canseling',

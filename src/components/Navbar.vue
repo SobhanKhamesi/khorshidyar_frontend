@@ -183,6 +183,10 @@
       <router-link :to="{ name: 'ListContract' }">
         <q-item v-ripple clickable>
           <q-item-section>لیست مذاکره و قرارداد</q-item-section>
+          <q-item-section side v-if="contract_signed_count > 0">
+            <q-icon name="history_edu" color="positive" size="20px"
+                    :title="contract_signed_count + ' قرارداد توسط مشتری امضا شده است'"/>
+          </q-item-section>
           <q-item-section side v-if="check_mozakere_count">
             <span class="blink-me">{{ mozakere_count }}</span>
           </q-item-section>
@@ -411,6 +415,8 @@ export default defineComponent({
       sum_count: 0,
       // فرم‌های اولیه تکمیل شده توسط مشتری که هنوز در کارتابل دیده نشده‌اند
       intake_form_count: 0,
+      // قراردادهایی که مشتری امضا کرده و هنوز در کارتابل دیده نشده‌اند
+      contract_signed_count: 0,
       check_sum_count: false,
     }
   },
@@ -442,8 +448,14 @@ export default defineComponent({
             this.installation_service_count = response.data.data.installation_service_count
 
             const intakeCount = response.data.data.intake_form_count || 0
-            if (intakeCount > this.intake_form_count) this.notifyIntakeForm(intakeCount)
+            if (intakeCount > this.intake_form_count)
+              this.notifyAlarm(intakeCount + ' فرم اولیه توسط مشتری/سرنخ تکمیل شده و در کارتابل درخواست‌ها منتظر بررسی است', 'ListRequest')
             this.intake_form_count = intakeCount
+
+            const signedCount = response.data.data.contract_signed_count || 0
+            if (signedCount > this.contract_signed_count)
+              this.notifyAlarm(signedCount + ' قرارداد توسط مشتری امضا شده است (کارتابل مذاکره و قرارداد)', 'ListContract')
+            this.contract_signed_count = signedCount
             this.check_installation_service_count = this.installation_service_count > 0;
 
             setTimeout(() => {
@@ -453,16 +465,16 @@ export default defineComponent({
           })
     },
 
-    // آلارم تکمیل فرم اولیه توسط مشتری/سرنخ
-    notifyIntakeForm(count) {
+    // آلارم رویدادهای سمت مشتری (تکمیل فرم اولیه، امضای قرارداد)
+    notifyAlarm(message, routeName) {
       this.$q.notify({
         type: 'info',
         icon: 'notifications_active',
         position: 'top',
         timeout: 0,
-        message: count + ' فرم اولیه توسط مشتری/سرنخ تکمیل شده و در کارتابل درخواست‌ها منتظر بررسی است',
+        message,
         actions: [
-          {label: 'مشاهده', color: 'yellow', handler: () => this.$router.push({name: 'ListRequest'})},
+          {label: 'مشاهده', color: 'yellow', handler: () => this.$router.push({name: routeName})},
           {label: 'بستن', color: 'white'}
         ]
       })

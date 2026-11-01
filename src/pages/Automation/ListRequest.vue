@@ -115,6 +115,8 @@
                 <!--                       color="positive" icon="print"/>-->
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                        :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
+                <q-btn title="اصلاحیه فاکتور و روش پرداخت" dense round color="deep-purple" icon="receipt_long"
+                       @click.prevent="openAmendment(props.row.id)"/>
                 <q-btn title="حذف" dense round color="negative" icon="delete"
                        @click.prevent="deleteConfirmation(props.row.id)"/>
               </q-td>
@@ -320,10 +322,17 @@
 
         <q-separator/>
 
-        <q-card-section class="row justify-end">
+        <q-card-section class="row items-center justify-end q-gutter-md">
           <div class="text-subtitle1">
-            جمع کل: <strong>{{ moneyFormat(totalInvoicePrice) }}</strong> تومان
+            جمع اقلام: <strong>{{ moneyFormat(totalInvoicePrice) }}</strong> تومان
           </div>
+          <!-- مبلغ نهایی به‌صورت دستی وارد می‌شود و از جمع اقلام محاسبه نمی‌شود -->
+          <q-input outlined dense dir="ltr" type="number" suffix="تومان" style="min-width: 260px"
+                   v-model.number="finalPrice" label="مبلغ نهایی (دستی) *">
+            <template v-slot:after>
+              <q-btn flat dense rounded size="sm" color="primary" label="برابر جمع اقلام" @click="finalPrice = totalInvoicePrice"/>
+            </template>
+          </q-input>
         </q-card-section>
 
         <q-card-section class="row justify-end">
@@ -534,6 +543,7 @@
 
 
     <survey-view-dialog v-model="surveyViewDlg" :automation-id="surveyViewAutomationId"/>
+    <amendment-dialog v-model="amendDlg" :automation-id="amendAutomationId" @saved="getData()"/>
     <intake-form-dialog v-model="intakeFormDlg" :automation-id="intakeFormAutomationId" @seen="markIntakeSeen"/>
     <CustomerInfoDialog v-model="customerInfoDlg" :customer="customerInfoTarget"/>
 
@@ -545,6 +555,7 @@ import {exportFile, LocalStorage, QSpinnerPuff} from 'quasar'
 import {VMoney} from "v-money";
 import {api} from 'boot/axios'
 import SurveyViewDialog from "components/SurveyViewDialog.vue";
+import AmendmentDialog from 'components/AmendmentDialog.vue'
 import IntakeFormDialog from "components/IntakeFormDialog.vue";
 import PreInvoiceItemsDialog from "components/PreInvoiceItemsDialog.vue";
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
@@ -573,10 +584,12 @@ function emptyInvoiceItem() {
 
 export default {
   name: "ListRequest",
-  components: {ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog, IntakeFormDialog},
+  components: {AmendmentDialog, ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog, IntakeFormDialog},
   directives: {money: VMoney},
   data() {
     return {
+      amendDlg: false,
+      amendAutomationId: '',
       intakeFormDlg: false,
       intakeFormAutomationId: '',
       customerInfoDlg: false,
@@ -634,6 +647,7 @@ export default {
       Text_canceling: '',
 
       selectedInvoice: null,
+      finalPrice: null,
 
       // ---------- پیش فاکتور ----------
       products: [],
@@ -672,6 +686,11 @@ export default {
     }
   },
   methods: {
+    // اصلاحیه فاکتور و روش پرداخت (در هر مرحله)
+    openAmendment(id) {
+      this.amendAutomationId = id
+      this.amendDlg = true
+    },
     // نمایش فرم اولیه‌ای که مشتری تکمیل کرده است
     // فرم تکمیل شده همان فرم بازدید درخواست است؛ در غیر این صورت وضعیت لینک (کپی/ارسال مجدد) نمایش داده می‌شود
     showIntakeForm(row) {
@@ -877,6 +896,7 @@ export default {
     acceptRow(invoice) {
       this.selectedInvoice = invoice
       this.invoiceItems = [emptyInvoiceItem(), emptyInvoiceItem(), emptyInvoiceItem()]
+      this.finalPrice = null
       this.acceptRowDlg = true;
 
       const ensureProducts = this.products.length === 0
@@ -932,6 +952,10 @@ export default {
 
     submitInvoice() {
       if (!this.validateInvoiceItems()) return
+      if (this.finalPrice === null || this.finalPrice === '') {
+        this.$q.notify({type: 'negative', position: 'bottom', message: 'مبلغ نهایی را وارد نمایید'})
+        return
+      }
 
       this.acceptingInvoice = true;
 
@@ -943,6 +967,7 @@ export default {
 
       const payload = {
         id: this.selectedInvoice.id,
+        final_price: this.finalPrice,
         description: this.description,
         orders: orders
       }

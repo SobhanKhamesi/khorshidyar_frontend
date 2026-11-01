@@ -117,6 +117,8 @@
                        color="positive" icon="print"/>
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                        :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
+                <q-btn title="اصلاحیه فاکتور و روش پرداخت" dense round color="deep-purple" icon="receipt_long"
+                       @click.prevent="openAmendment(props.row.id)"/>
                 <q-btn title="حذف" dense round color="negative" icon="delete"
                        @click.prevent="deleteConfirmation(props.row.id)"/>
               </q-td>
@@ -196,6 +198,15 @@
         <q-separator/>
 
         <q-card-section style="max-height: 65vh" class="scroll">
+          <!-- مبلغ کل قرارداد به‌صورت دستی وارد می‌شود -->
+          <q-input outlined dir="ltr" type="number" suffix="تومان" class="q-mb-md"
+                   v-model.number="contractTotal" label="مبلغ کل قرارداد (دستی) *"
+                   :hint="'مبلغ پیش فاکتور: ' + moneyFormat(selectedInvoice?.final_price) + ' تومان'">
+            <template v-slot:after>
+              <q-btn flat dense rounded size="sm" color="primary" label="برابر پیش فاکتور"
+                     @click="contractTotal = Number(selectedInvoice?.final_price) || 0"/>
+            </template>
+          </q-input>
 
 <!--          <div class="text-subtitle2 q-mb-sm">اقلام قرارداد</div>-->
 <!--          <div class="q-gutter-y-sm q-mb-md">-->
@@ -296,7 +307,7 @@
           <div v-if="amountMismatchWarning" class="text-orange-9 text-caption q-mt-md">
             <q-icon name="warning"/>
             توجه: مجموع پرداختی ها و چک ها ({{ moneyFormat(totalPaymentsAndCheques) }} تومان) با مبلغ پیش فاکتور
-            ({{ moneyFormat(selectedInvoice?.final_price) }} تومان) برابر نیست.
+            ({{ moneyFormat(contractTotal ?? selectedInvoice?.final_price) }} تومان) برابر نیست.
           </div>
         </q-card-section>
 
@@ -449,6 +460,7 @@
     </q-dialog>
 
     <survey-view-dialog v-model="surveyViewDlg" :automation-id="surveyViewAutomationId"/>
+    <amendment-dialog v-model="amendDlg" :automation-id="amendAutomationId" @saved="getData()"/>
     <pre-invoice-items-dialog v-model="viewItemsDlg" :automation-id="focusedAutomationId"/>
     <CustomerInfoDialog v-model="customerInfoDlg" :customer="customerInfoTarget"/>
 
@@ -459,6 +471,7 @@
 import {exportFile, LocalStorage, QSpinnerPuff} from 'quasar'
 import {api} from 'boot/axios'
 import SurveyViewDialog from "components/SurveyViewDialog.vue";
+import AmendmentDialog from 'components/AmendmentDialog.vue'
 import PreInvoiceItemsDialog from "components/PreInvoiceItemsDialog.vue";
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
 import ReferrerPercentEdit from "components/ReferrerPercentEdit.vue";
@@ -493,9 +506,11 @@ function emptyCheque() {
 
 export default {
   name: "ListPreInvoice",
-  components: {ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog},
+  components: {AmendmentDialog, ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog},
   data() {
     return {
+      amendDlg: false,
+      amendAutomationId: '',
       customerInfoDlg: false,
       customerInfoTarget: null,
 
@@ -535,6 +550,7 @@ export default {
       Text_canceling:'',
 
       selectedInvoice: null,
+      contractTotal: null,
 
       // ---------- مشاهده اقلام پیش فاکتور ----------
       viewItemsDlg: false,
@@ -573,10 +589,15 @@ export default {
     },
     amountMismatchWarning() {
       if (!this.selectedInvoice) return false
-      return this.totalPaymentsAndCheques !== Number(this.selectedInvoice.final_price || 0)
+      return this.totalPaymentsAndCheques !== Number(this.contractTotal ?? this.selectedInvoice.final_price ?? 0)
     }
   },
   methods: {
+    // اصلاحیه فاکتور و روش پرداخت (در هر مرحله)
+    openAmendment(id) {
+      this.amendAutomationId = id
+      this.amendDlg = true
+    },
     openCustomerInfo(customer) {
       this.customerInfoTarget = customer
       this.customerInfoDlg = true
@@ -715,6 +736,7 @@ export default {
       this.contractItems = [emptyContractItem()]
       this.payments = [emptyPayment()]
       this.cheques = [emptyCheque()]
+      this.contractTotal = null
       this.acceptRowDlg = true;
     },
     cancelRow(invoice) {
@@ -723,6 +745,10 @@ export default {
     },
     acceptInvoice() {
       if (!this.validateAcceptForm()) return
+      if (this.contractTotal === null || this.contractTotal === '') {
+        this.$q.notify({type: 'negative', position: 'bottom', message: 'مبلغ کل قرارداد را وارد نمایید'})
+        return
+      }
 
       this.acceptingInvoice = true;
 
@@ -746,6 +772,7 @@ export default {
 
       const payload = {
         id: this.selectedInvoice.id,
+        final_price: this.contractTotal,
         contract_items,
         payments,
         cheques

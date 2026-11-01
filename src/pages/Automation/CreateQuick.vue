@@ -205,10 +205,17 @@
 
       <q-separator/>
 
-      <q-card-section class="row justify-end">
+      <q-card-section class="row items-center justify-end q-gutter-md">
         <div class="text-subtitle1">
-          جمع کل: <strong>{{ moneyFormat(totalInvoicePrice) }}</strong> تومان
+          جمع اقلام: <strong>{{ moneyFormat(totalInvoicePrice) }}</strong> تومان
         </div>
+        <!-- مبلغ نهایی به‌صورت دستی وارد می‌شود و از جمع اقلام محاسبه نمی‌شود -->
+        <q-input outlined dense dir="ltr" type="number" suffix="تومان" style="min-width: 260px"
+                 v-model.number="finalPrice" label="مبلغ نهایی (دستی) *">
+          <template v-slot:after>
+            <q-btn flat dense rounded size="sm" color="primary" label="برابر جمع اقلام" @click="finalPrice = totalInvoicePrice"/>
+          </template>
+        </q-input>
       </q-card-section>
 
       <q-separator/>
@@ -372,6 +379,7 @@ export default {
       customer_id: null,
       introducerPercent: '',
       description:'',
+      finalPrice: null,
       customersAndLeads: [],
       customersAndLeadsOptions: [],
 
@@ -577,6 +585,7 @@ export default {
     resetForm() {
       this.customer_id = null
       this.introducerPercent = ''
+      this.finalPrice = null
       this.invoiceItems = [emptyInvoiceItem(), emptyInvoiceItem(), emptyInvoiceItem()]
     },
 
@@ -588,6 +597,10 @@ export default {
       }
 
       if (!this.validateInvoiceItems()) return
+      if (this.finalPrice === null || this.finalPrice === '') {
+        this.$q.notify({type: 'negative', position: 'bottom', message: 'مبلغ نهایی را وارد نمایید'})
+        return
+      }
 
       this.submitting = true
 
@@ -603,6 +616,7 @@ export default {
 
       const payload = {
         customer: this.customer_id.id,
+        final_price: this.finalPrice,
         referrer_percent: this.introducerPercent,
         description: this.description,
         orders: orders

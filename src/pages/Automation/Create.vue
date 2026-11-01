@@ -595,7 +595,7 @@
 </template>
 
 <script>
-import {QSpinnerPuff} from "quasar";
+import {copyToClipboard, QSpinnerPuff} from "quasar";
 import {api} from 'boot/axios'
 import {VMoney} from 'v-money'
 import CustomerInfoDialog from 'components/CustomerInfoDialog.vue'
@@ -927,7 +927,15 @@ export default {
             this.$q.notify({timeout: 3000, position: 'center', type: 'positive', message: response.data.message})
           } else {
             // در صورت خطای پیامک، لینک برای ارسال دستی نمایش داده می‌شود
-            this.$q.dialog({title: 'ارسال پیامک ناموفق بود', message: response.data.message + '<br><br><b dir="ltr">' + data.link + '</b>', html: true})
+            this.$q.notify({
+              type: 'warning', position: 'center', timeout: 0, multiLine: true,
+              message: response.data.message,
+              caption: data.link,
+              actions: [
+                {label: 'کپی لینک', color: 'white', handler: () => copyToClipboard(data.link)},
+                {label: 'بستن', color: 'white'}
+              ]
+            })
           }
           this.customer_id = ''
           this.introducerPercent = ''

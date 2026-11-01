@@ -123,6 +123,8 @@
                        color="positive" icon="print"/>
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                        :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
+                <q-btn title="اصلاحیه فاکتور و روش پرداخت" dense round color="deep-purple" icon="receipt_long"
+                       @click.prevent="openAmendment(props.row.id)"/>
 
               </q-td>
 
@@ -136,6 +138,7 @@
 
     <!-- دیالوگ های نمایشی مشترک -->
     <survey-view-dialog v-model="surveyViewDlg" :automation-id="focusedAutomationId"/>
+    <amendment-dialog v-model="amendDlg" :automation-id="amendAutomationId" @saved="getData()"/>
     <pre-invoice-items-dialog v-model="preInvoiceItemsDlg" :automation-id="focusedAutomationId"/>
     <contract-info-dialog v-model="contractInfoDlg" :automation-id="focusedAutomationId"/>
 
@@ -228,6 +231,7 @@
 import {exportFile, LocalStorage} from 'quasar'
 import {api} from 'boot/axios'
 import SurveyViewDialog from 'components/SurveyViewDialog.vue'
+import AmendmentDialog from 'components/AmendmentDialog.vue'
 import PreInvoiceItemsDialog from 'components/PreInvoiceItemsDialog.vue'
 import ContractInfoDialog from 'components/ContractInfoDialog.vue'
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
@@ -247,10 +251,12 @@ function wrapCsvValue(val, formatFn) {
 
 export default {
   name: "listcanseling",
-  components: {ReferrerPercentEdit, CustomerInfoDialog, SurveyViewDialog, PreInvoiceItemsDialog, ContractInfoDialog},
+  components: {AmendmentDialog, ReferrerPercentEdit, CustomerInfoDialog, SurveyViewDialog, PreInvoiceItemsDialog, ContractInfoDialog},
   data() {
 
     return {
+      amendDlg: false,
+      amendAutomationId: '',
       customerInfoDlg: false,
       customerInfoTarget: null,
 
@@ -300,6 +306,11 @@ export default {
     }
   },
   methods: {
+    // اصلاحیه فاکتور و روش پرداخت (در هر مرحله)
+    openAmendment(id) {
+      this.amendAutomationId = id
+      this.amendDlg = true
+    },
     openCustomerInfo(customer) {
       this.customerInfoTarget = customer
       this.customerInfoDlg = true
@@ -370,7 +381,7 @@ export default {
     },
     acceptInvoice() {
       this.acceptingInvoice = true;
-      api.get('automation/accept/' + this.selectedInvoice.id)
+      api.post('automation/restore', {id: this.selectedInvoice.id})
           .then(response => {
             this.acceptingInvoice = false;
             this.acceptRowDlg = false;
