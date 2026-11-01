@@ -548,12 +548,14 @@ export default {
     },
     surveyTypeLabel(type) {
       if (type === 1) return 'خانگی'
-      if (type === 2) return 'صنعتی'
+      if (type === 2) return 'صنعتی'
+      if (type === 3) return 'ثبت شده از مشتری'
       return '-'
     },
     surveyTypeColor(type) {
       if (type === 1) return 'teal'
-      if (type === 2) return 'deep-orange'
+      if (type === 2) return 'deep-orange'
+      if (type === 3) return 'purple'
       return 'grey'
     },
     //____________ایجاد دلایل شکست____________

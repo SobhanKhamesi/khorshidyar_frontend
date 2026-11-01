@@ -319,6 +319,14 @@
           </div>
         </q-card-section>
 
+        <!-- ============ فرم ثبت شده از مشتری ============ -->
+        <q-card-section v-if="surveyType === 3">
+          <div class="text-caption text-grey-8 q-mb-md">
+            همان فرم اولیه‌ای که مشتری از طریق لینک تکمیل می‌کند؛ در صورت نیاز اینجا قابل ویرایش است.
+          </div>
+          <customer-survey-fields v-model="customerSurvey"/>
+        </q-card-section>
+
         <!-- ============ فرم کارشناسی صنعتی ============ -->
         <q-card-section v-if="surveyType === 2">
           <div class="row q-col-gutter-md">
@@ -554,6 +562,7 @@ import {QSpinnerPuff} from "quasar";
 import {api} from 'boot/axios'
 import {VMoney} from 'v-money'
 import CustomerInfoDialog from 'components/CustomerInfoDialog.vue'
+import CustomerSurveyFields from 'components/CustomerSurveyFields.vue'
 
 // نگاشت کلید مصرف‌کننده به برچسب نمایشی (برای ساخت لیست اقلام قطعی برق)
 const consumerLabels = {
@@ -574,7 +583,7 @@ const consumerLabels = {
 
 export default {
   name: "EditAutomation",
-  components: {CustomerInfoDialog},
+  components: {CustomerInfoDialog, CustomerSurveyFields},
   directives: {money: VMoney},
 
   data() {
@@ -602,7 +611,8 @@ export default {
       surveyType: null,
       surveyTypeOptions: [
         {label: 'کارشناسی خانگی', value: 1},
-        {label: 'کارشناسی صنعتی', value: 2}
+        {label: 'کارشناسی صنعتی', value: 2},
+        {label: 'ثبت شده از مشتری', value: 3}
       ],
 
       homeGoalOptions: ['احداث نیروگاه', 'برق پشتیبان', 'کاهش میزان مصرف', 'تامین برق کامل'],
@@ -661,6 +671,7 @@ export default {
         {name: 'action', label: 'عملیات', field: 'action', align: 'center'}
       ],
 
+      customerSurvey: {},
       industrial: {
         goals: [],
         meterType: '',
@@ -942,20 +953,25 @@ export default {
         .then(response => {
           const data = response.data.data
 
-          this.invoiceDate = data.jalali_date
+          this.invoiceDate = data.jalali_visit_date || ''
           this.customer_id = data.customer
 
           this.introducerPercent = data.referrer_percent
 
           this.expert_id = data.expert
           this.description = data.description
-          // survey_type از بک اند به صورت عددی (1 یا 2) می آید
+          // survey_type از بک اند به صورت عددی (۱ خانگی، ۲ صنعتی، ۳ ثبت شده از مشتری) می آید
           this.surveyType = data.survey_type
 
           if (data.survey_type === 1) {
             this.mapHomeSurveyFromApi(data.home_survey)
           } else if (data.survey_type === 2) {
             this.mapIndustrialSurveyFromApi(data.industrial_survey)
+          }
+          // فرم ثبت شده از مشتری (حتی اگر نوع فعلی چیز دیگری باشد، برای جابه‌جایی بین انواع حفظ می‌شود)
+          if (data.customer_survey) {
+            const {id, automation_id, rows, created_at, updated_at, ...answers} = data.customer_survey
+            this.customerSurvey = {...answers, surface_material: answers.surface_material || []}
           }
         })
     },
@@ -976,8 +992,8 @@ export default {
       formData.append('customer', this.customer_id.id)
       formData.append('referrer_percent', this.introducerPercent)
       formData.append('description', this.description || '')
-      formData.append('surveyType', this.surveyType)
-      formData.append('expert', this.expert_id.id)
+      formData.append('surveyType', this.surveyType ?? '')
+      formData.append('expert', this.expert_id ? this.expert_id.id : '')
 
       // ساخت آبجکت survey بدون فایل ها (فایل ها جدا append می شوند)
       let surveyData = null
@@ -987,6 +1003,8 @@ export default {
       } else if (this.surveyType === 2) {
         const {requiredPhotos, existingRequiredPhotos, ...rest} = this.industrial
         surveyData = rest
+      } else if (this.surveyType === 3) {
+        surveyData = {...this.customerSurvey}
       }
 
       if (surveyData) {

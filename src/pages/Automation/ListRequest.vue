@@ -57,6 +57,14 @@
                 <q-btn
                   @click.prevent="openCustomerInfo(props.row.customer)"
                   :label="props.row.customer.name" dense flat/>
+                <div v-if="props.row.intake_form">
+                  <q-badge class="cursor-pointer"
+                           :color="props.row.intake_form.is_submitted ? 'positive' : 'orange'"
+                           :label="props.row.intake_form.is_submitted ? 'فرم اولیه تکمیل شد' : 'در انتظار تکمیل فرم توسط مشتری'"
+                           @click="showIntakeForm(props.row)"/>
+                  <q-icon v-if="props.row.intake_form.is_submitted && !props.row.intake_form.seen_at"
+                          name="notifications_active" color="negative" size="18px" class="q-ml-xs" title="فرم جدید، هنوز بررسی نشده"/>
+                </div>
               </q-td>
               <q-td key="referrer_percent" :props="props">
                 <template v-if="props.row.customer && props.row.customer.referrer_id">
@@ -526,6 +534,7 @@
 
 
     <survey-view-dialog v-model="surveyViewDlg" :automation-id="surveyViewAutomationId"/>
+    <intake-form-dialog v-model="intakeFormDlg" :automation-id="intakeFormAutomationId" @seen="markIntakeSeen"/>
     <CustomerInfoDialog v-model="customerInfoDlg" :customer="customerInfoTarget"/>
 
   </q-page>
@@ -536,6 +545,7 @@ import {exportFile, LocalStorage, QSpinnerPuff} from 'quasar'
 import {VMoney} from "v-money";
 import {api} from 'boot/axios'
 import SurveyViewDialog from "components/SurveyViewDialog.vue";
+import IntakeFormDialog from "components/IntakeFormDialog.vue";
 import PreInvoiceItemsDialog from "components/PreInvoiceItemsDialog.vue";
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
 import ReferrerPercentEdit from "components/ReferrerPercentEdit.vue";
@@ -563,10 +573,12 @@ function emptyInvoiceItem() {
 
 export default {
   name: "ListRequest",
-  components: {ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog},
+  components: {ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog, IntakeFormDialog},
   directives: {money: VMoney},
   data() {
     return {
+      intakeFormDlg: false,
+      intakeFormAutomationId: '',
       customerInfoDlg: false,
       customerInfoTarget: null,
 
@@ -660,6 +672,23 @@ export default {
     }
   },
   methods: {
+    // نمایش فرم اولیه‌ای که مشتری تکمیل کرده است
+    // فرم تکمیل شده همان فرم بازدید درخواست است؛ در غیر این صورت وضعیت لینک (کپی/ارسال مجدد) نمایش داده می‌شود
+    showIntakeForm(row) {
+      if (row.intake_form.is_submitted) {
+        this.showSurveyForm(row.id)
+        if (!row.intake_form.seen_at) {
+          api.get('automation/intake-form/' + row.id).then(() => this.markIntakeSeen(row.id))
+        }
+        return
+      }
+      this.intakeFormAutomationId = row.id
+      this.intakeFormDlg = true
+    },
+    markIntakeSeen(automationId) {
+      const row = this.rows.find(r => r.id === automationId)
+      if (row && row.intake_form && !row.intake_form.seen_at) row.intake_form.seen_at = new Date().toISOString()
+    },
     openCustomerInfo(customer) {
       this.customerInfoTarget = customer
       this.customerInfoDlg = true
@@ -712,12 +741,14 @@ export default {
 
     surveyTypeLabel(type) {
       if (type === 1) return 'خانگی'
-      if (type === 2) return 'صنعتی'
+      if (type === 2) return 'صنعتی'
+      if (type === 3) return 'ثبت شده از مشتری'
       return '-'
     },
     surveyTypeColor(type) {
       if (type === 1) return 'teal'
-      if (type === 2) return 'deep-orange'
+      if (type === 2) return 'deep-orange'
+      if (type === 3) return 'purple'
       return 'grey'
     },
     //____________ایجاد دلایل شکست____________

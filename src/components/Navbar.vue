@@ -163,6 +163,10 @@
       <router-link :to="{ name: 'ListRequest' }">
         <q-item v-ripple clickable>
           <q-item-section>لیست درخواست ها</q-item-section>
+          <q-item-section side v-if="intake_form_count > 0">
+            <q-icon name="notifications_active" color="negative" size="20px"
+                    :title="intake_form_count + ' فرم اولیه جدید توسط مشتری تکمیل شده است'"/>
+          </q-item-section>
           <q-item-section side v-if="check_darkhast_count">
             <span class="blink-me">{{ darkhast_count }}</span>
           </q-item-section>
@@ -405,6 +409,8 @@ export default defineComponent({
       check_pishfactor_count: false,
       check_mozakere_count: false,
       sum_count: 0,
+      // فرم‌های اولیه تکمیل شده توسط مشتری که هنوز در کارتابل دیده نشده‌اند
+      intake_form_count: 0,
       check_sum_count: false,
     }
   },
@@ -434,6 +440,10 @@ export default defineComponent({
             this.check_after_sale_count = this.after_sale_count > 0;
 
             this.installation_service_count = response.data.data.installation_service_count
+
+            const intakeCount = response.data.data.intake_form_count || 0
+            if (intakeCount > this.intake_form_count) this.notifyIntakeForm(intakeCount)
+            this.intake_form_count = intakeCount
             this.check_installation_service_count = this.installation_service_count > 0;
 
             setTimeout(() => {
@@ -441,6 +451,32 @@ export default defineComponent({
               this.checking();
             }, 10000);
           })
+    },
+
+    // آلارم تکمیل فرم اولیه توسط مشتری/سرنخ
+    notifyIntakeForm(count) {
+      this.$q.notify({
+        type: 'info',
+        icon: 'notifications_active',
+        position: 'top',
+        timeout: 0,
+        message: count + ' فرم اولیه توسط مشتری/سرنخ تکمیل شده و در کارتابل درخواست‌ها منتظر بررسی است',
+        actions: [
+          {label: 'مشاهده', color: 'yellow', handler: () => this.$router.push({name: 'ListRequest'})},
+          {label: 'بستن', color: 'white'}
+        ]
+      })
+      try {
+        // صدای کوتاه آلارم (در صورت اجازه مرورگر)
+        const ctx = new (window.AudioContext || window.webkitAudioContext)()
+        const osc = ctx.createOscillator()
+        osc.frequency.value = 880
+        osc.connect(ctx.destination)
+        osc.start()
+        osc.stop(ctx.currentTime + 0.25)
+      } catch (e) {
+        // مرورگر پخش صدا را اجازه نداده است
+      }
     },
 
     getData() {

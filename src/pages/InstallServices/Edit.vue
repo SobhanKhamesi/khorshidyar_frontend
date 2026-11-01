@@ -627,7 +627,8 @@ export default {
 
     surveyTypeLabel(type) {
       if (type === 1) return 'کارشناسی خانگی'
-      if (type === 2) return 'کارشناسی صنعتی'
+      if (type === 2) return 'کارشناسی صنعتی'
+      if (type === 3) return 'ثبت شده از مشتری'
       return 'نامشخص'
     },
 

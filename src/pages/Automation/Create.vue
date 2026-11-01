@@ -6,9 +6,24 @@
           <div class="text-h6">ایجاد درخواست جدید</div>
         </q-card-section>
         <q-separator/>
+        <q-card-section class="q-pb-none">
+          <q-btn-toggle
+            v-model="requestMode"
+            spread no-caps rounded unelevated
+            toggle-color="accent" color="grey-3" text-color="grey-9"
+            :options="[
+              {label: 'تکمیل فرم بازدید توسط کارشناس', value: 'expert'},
+              {label: 'ارسال فرم اولیه برای تکمیل توسط مشتری', value: 'customer'}
+            ]"
+          />
+          <div v-if="requestMode === 'customer'" class="text-caption text-grey-8 q-mt-sm">
+            لینک فرم اولیه برای مشتری پیامک می‌شود و درخواست در کارتابل «درخواست‌ها» ثبت می‌شود.
+            پس از تکمیل فرم توسط مشتری، در کارتابل اعلان نمایش داده می‌شود.
+          </div>
+        </q-card-section>
         <q-card-section>
           <div class="row q-col-gutter-md">
-            <div class="col-md-6 col-xs-12 q-gutter-y-md">
+            <div v-if="requestMode === 'expert'" class="col-md-6 col-xs-12 q-gutter-y-md">
 
               <q-input mask="####/##/##" outlined dir="ltr" v-model="visitDate" label="تاریخ بازدید">
                 <template v-slot:prepend>
@@ -71,7 +86,10 @@
               />
             </div>
 
-            <div class="col-md-6 col-xs-12 q-gutter-y-md">
+            <div v-if="requestMode === 'customer'" class="col-12">
+              <q-input outlined autogrow type="textarea" v-model="description" label="توضیحات (اختیاری)"/>
+            </div>
+            <div v-if="requestMode === 'expert'" class="col-md-6 col-xs-12 q-gutter-y-md">
               <q-select
                 option-label="name"
                 option-value="id"
@@ -95,6 +113,7 @@
             </div>
           </div>
         </q-card-section>
+        <template v-if="requestMode === 'expert'">
         <q-card-section>
           <div class="text-subtitle1 q-mb-md">فرم بازدید</div>
           <q-select
@@ -312,6 +331,14 @@
           </div>
         </q-card-section>
 
+        <!-- ============ فرم ثبت شده از مشتری ============ -->
+        <q-card-section v-if="surveyType === 3">
+          <div class="text-caption text-grey-8 q-mb-md">
+            همان فرم اولیه‌ای که مشتری از طریق لینک تکمیل می‌کند؛ در صورت نیاز اینجا قابل ویرایش است.
+          </div>
+          <customer-survey-fields v-model="customerSurvey"/>
+        </q-card-section>
+
         <!-- ============ فرم کارشناسی صنعتی ============ -->
         <q-card-section v-if="surveyType === 2">
           <div class="row q-col-gutter-md">
@@ -451,8 +478,10 @@
             </div>
           </div>
         </q-card-section>
+        </template>
         <q-card-actions>
-          <q-btn type="submit" rounded class="full-width" color="accent" label="ثبت"/>
+          <q-btn type="submit" rounded class="full-width" color="accent"
+                 :label="requestMode === 'customer' ? 'ارسال پیامک فرم اولیه و ثبت درخواست' : 'ثبت'"/>
         </q-card-actions>
       </q-card>
 
@@ -570,6 +599,7 @@ import {QSpinnerPuff} from "quasar";
 import {api} from 'boot/axios'
 import {VMoney} from 'v-money'
 import CustomerInfoDialog from 'components/CustomerInfoDialog.vue'
+import CustomerSurveyFields from 'components/CustomerSurveyFields.vue'
 // نگاشت کلید مصرف‌کننده به برچسب نمایشی
 const consumerLabels = {
   fridge: 'یخچال و فریزر',
@@ -649,7 +679,7 @@ const defaultIndustrial = () => ({
 export default {
 
   name: "CreateAutomation",
-  components: {CustomerInfoDialog},
+  components: {CustomerInfoDialog, CustomerSurveyFields},
   directives: {money: VMoney},
 
   data() {
@@ -668,6 +698,8 @@ export default {
       newCustomerDlg: false,
 
       sendSmsDlg: false,
+      // expert: کارشناس فرم بازدید را تکمیل می‌کند | customer: لینک فرم اولیه برای مشتری ارسال می‌شود
+      requestMode: 'expert',
       sendSms: true,
 
       customersAndLeads: [],
@@ -679,7 +711,8 @@ export default {
       surveyType: null,
       surveyTypeOptions: [
         {label: 'کارشناسی خانگی', value: 1},
-        {label: 'کارشناسی صنعتی', value: 2}
+        {label: 'کارشناسی صنعتی', value: 2},
+        {label: 'ثبت شده از مشتری', value: 3}
       ],
 
       homeGoalOptions: ['احداث نیروگاه','برق پشتیبان', 'کاهش میزان مصرف', 'تامین برق کامل'],
@@ -705,6 +738,7 @@ export default {
       ],
 
       industrial: defaultIndustrial(),
+      customerSurvey: {},
 
       newMainConsumerDlg: false,
       newMainConsumer: {name: '', power: null, type: 'موتوری', starterType: 'ساده'},
@@ -867,7 +901,41 @@ export default {
       })
     },
     submitForm() {
+      if (this.requestMode === 'customer') {
+        this.sendIntakeForm()
+        return
+      }
       this.sendSmsDlg = true;
+    },
+    // ارسال لینک فرم اولیه برای مشتری و ثبت درخواست در کارتابل
+    sendIntakeForm() {
+      if (!this.customer_id) {
+        this.$q.notify({type: 'negative', position: 'center', message: 'مشتری را انتخاب نمایید'})
+        return
+      }
+
+      this.$q.loading.show({spinner: QSpinnerPuff, spinnerSize: 140, message: 'در حال ارسال پیامک', sanitize: true})
+
+      api.post('automation/send-intake-form', {
+        customer: this.customer_id.id,
+        referrer_percent: this.introducerPercent,
+        description: this.description,
+      })
+        .then(response => {
+          const data = response.data.data
+          if (data.sms_sent) {
+            this.$q.notify({timeout: 3000, position: 'center', type: 'positive', message: response.data.message})
+          } else {
+            // در صورت خطای پیامک، لینک برای ارسال دستی نمایش داده می‌شود
+            this.$q.dialog({title: 'ارسال پیامک ناموفق بود', message: response.data.message + '<br><br><b dir="ltr">' + data.link + '</b>', html: true})
+          }
+          this.customer_id = ''
+          this.introducerPercent = ''
+          this.description = ''
+        })
+        .finally(() => {
+          this.$q.loading.hide()
+        })
     },
     submitFormFinal() {
       this.$q.loading.show({
@@ -883,14 +951,14 @@ export default {
       formData.append('date', this.visitDate)
       formData.append('customer', this.customer_id.id)
       formData.append('referrer_percent', this.introducerPercent)
-      formData.append('expert', this.expert_id.id)
+      formData.append('expert', this.expert_id ? this.expert_id.id : '')
       formData.append('description', this.description)
-      formData.append('surveyType', this.surveyType)
+      formData.append('surveyType', this.surveyType ?? '')
 
       // آبجکت survey (بدون فایل‌ها) به‌صورت JSON
       const surveyData = this.surveyType === 1
         ? {...this.home}
-        : (this.surveyType === 2 ? {...this.industrial} : null)
+        : (this.surveyType === 2 ? {...this.industrial} : (this.surveyType === 3 ? {...this.customerSurvey} : null))
 
       // فایل‌ها رو از آبجکت survey جدا می‌کنیم تا جدا append بشن
       if (this.surveyType === 1) {
@@ -934,6 +1002,7 @@ export default {
           this.surveyType = null
           this.home = defaultHome()
           this.industrial = defaultIndustrial()
+          this.customerSurvey = {}
           this.$q.loading.hide()
         })
         .catch(() => {

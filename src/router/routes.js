@@ -12,6 +12,8 @@ const routes = [
         meta: {requireNoAuth: true},
     },
     {path: '/survey/:token', component: () => import('pages/AfterSalesService/Survey.vue')},
+    // فرم اولیه‌ای که مشتری از طریق لینک پیامک شده تکمیل می‌کند (بدون ورود)
+    {path: '/request/:token', component: () => import('pages/IntakeForm.vue')},
     {
         path: '/',
         component: () => import('layouts/MainLayout.vue'),

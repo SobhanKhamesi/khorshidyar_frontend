@@ -34,17 +34,23 @@
           <q-separator/>
 
           <div class="row q-col-gutter-md">
-            <div class="col-md-6 col-xs-12">
-              <field-row label="کنتور تک فاز"
-                         :value="home.meter?.single?.selected ? 'دارد - تعداد: ' + (home.meter.single.count ?? '-') : 'ندارد'"/>
+            <div class="col-md-4 col-xs-12">
+              <field-row label="کنتور تک فاز" :value="meterText(home.meter?.single)"/>
             </div>
-            <div class="col-md-6 col-xs-12">
-              <field-row label="کنتور سه فاز"
-                         :value="home.meter?.three?.selected ? 'دارد - تعداد: ' + (home.meter.three.count ?? '-') : 'ندارد'"/>
+            <div class="col-md-4 col-xs-12">
+              <field-row label="کنتور سه فاز" :value="meterText(home.meter?.three)"/>
+            </div>
+            <div class="col-md-4 col-xs-12">
+              <field-row label="کنتور دیماندی (عادی)" :value="meterText(home.meter?.demand)"/>
             </div>
           </div>
 
-          <field-row label="تخمین محل نصب دستگاه" :value="home.installLocationNote"/>
+          <field-row label="شناسه قبض" :value="home.billId"/>
+          <field-row v-if="home.installLocationType"
+                     :label="installLocationLabel(home.installLocationType)"
+                     :value="withUnit(home.installLocationDistance, 'متر') || '-'"/>
+          <field-row label="نیاز به زیرساخت اضافه" :value="yesNo(home.needsExtraInfrastructure)"/>
+          <field-row v-if="home.needsExtraInfrastructure" label="توضیحات زیرساخت اضافه" :value="home.extraInfrastructureNote"/>
           <field-row label="تابلو برق داخلی" :value="yesNo(home.hasInternalPanel)"/>
           <field-row label="محل اتصال سیستم به مصرف کننده" :value="home.connectionPoint"/>
           <field-row label="مقدار کابل مورد نیاز" :value="withUnit(home.cableLength, 'متر')"/>
@@ -148,6 +154,8 @@
           <div class="row q-col-gutter-md">
             <div class="col-md-6 col-xs-12">
               <field-row label="نوع کنتور" :value="industrial.meterType"/>
+              <field-row label="مقدار آمپر" :value="withUnit(industrial.meterAmp, 'آمپر')"/>
+              <field-row label="شناسه قبض" :value="industrial.billId"/>
             </div>
             <div class="col-md-6 col-xs-12">
               <field-row label="قسمت انشعاب" :value="withUnit(industrial.branchCapacity, 'کیلووات')"/>
@@ -257,6 +265,23 @@
           <field-row label="توضیحات" :value="industrial.description"/>
         </div>
 
+        <!-- ============ نمایش فرم ثبت شده از مشتری ============ -->
+        <div v-else-if="surveyType === 3 && customer">
+          <q-badge color="purple" label="ثبت شده از مشتری" class="q-mb-md"/>
+          <q-markup-table flat bordered dense separator="cell">
+            <tbody>
+            <tr v-for="row in customer" :key="row.key">
+              <td class="text-grey-8" style="width: 40%; white-space: normal">{{ row.title }}</td>
+              <td style="white-space: normal">{{ row.value ?? '-' }}</td>
+            </tr>
+            </tbody>
+          </q-markup-table>
+        </div>
+
+        <div v-else class="text-center text-grey q-pa-lg">
+          فرم بازدیدی برای این درخواست ثبت نشده است
+        </div>
+
       </q-card-section>
 
       <q-separator/>
@@ -299,7 +324,8 @@ export default {
       loading: false,
       surveyType: null,
       home: null,
-      industrial: null
+      industrial: null,
+      customer: null
     }
   },
   watch: {
@@ -319,6 +345,19 @@ export default {
       if (val === null || val === undefined || val === '' || val === '0') return null
       return val + ' ' + unit
     },
+    // «دارد - تعداد: ۲ - ۲۵ آمپر» یا «ندارد»
+    meterText(meter) {
+      if (!meter?.selected) return 'ندارد'
+      let text = 'دارد - تعداد: ' + (meter.count ?? '-')
+      if (meter.amp !== null && meter.amp !== undefined && meter.amp !== '') text += ' - ' + meter.amp + ' آمپر'
+      return text
+    },
+    installLocationLabel(type) {
+      return {
+        plant_to_inverter: 'فاصله نیروگاه تا محل نصب اینورتر/سانورتر',
+        device_to_inverter: 'فاصله نصب دستگاه تا اینورتر/سانورتر'
+      }[type] || 'محل نصب دستگاه'
+    },
     moneyFormat(digits) {
       if (digits === null || digits === undefined) return null
       return (("" + digits).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"))
@@ -328,6 +367,7 @@ export default {
       this.surveyType = null
       this.home = null
       this.industrial = null
+      this.customer = null
 
       api.get('automation/' + this.automationId)
           .then(response => {
@@ -339,10 +379,15 @@ export default {
               this.home = {
                 goals: s.goals || [],
                 meter: {
-                  single: {selected: !!s.meter_single_selected, count: s.meter_single_count},
-                  three: {selected: !!s.meter_three_selected, count: s.meter_three_count}
+                  single: {selected: !!s.meter_single_selected, count: s.meter_single_count, amp: s.meter_single_amp},
+                  three: {selected: !!s.meter_three_selected, count: s.meter_three_count, amp: s.meter_three_amp},
+                  demand: {selected: !!s.meter_demand_selected, count: s.meter_demand_count, amp: s.meter_demand_amp}
                 },
-                installLocationNote: s.install_location_note,
+                billId: s.bill_id,
+                installLocationType: s.install_location_type,
+                installLocationDistance: s.install_location_distance,
+                needsExtraInfrastructure: s.needs_extra_infrastructure,
+                extraInfrastructureNote: s.extra_infrastructure_note,
                 hasInternalPanel: s.has_internal_panel,
                 connectionPoint: s.connection_point,
                 cableLength: s.cable_length,
@@ -373,11 +418,16 @@ export default {
                 hasLimitation: s.has_limitation,
                 description: s.description
               }
+            } else if (data.survey_type === 3 && data.customer_survey) {
+              // ردیف‌های «عنوان / مقدار» از بک‌اند می‌آید
+              this.customer = data.customer_survey.rows
             } else if (data.survey_type === 2 && data.industrial_survey) {
               const s = data.industrial_survey
               this.industrial = {
                 goals: s.goals || [],
                 meterType: s.meter_type,
+                meterAmp: s.meter_amp,
+                billId: s.bill_id,
                 branchCapacity: s.branch_capacity,
                 hasDedicatedTransformer: s.has_dedicated_transformer,
                 outagePerWeek: s.outage_per_week,

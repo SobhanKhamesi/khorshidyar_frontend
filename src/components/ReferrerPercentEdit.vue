@@ -63,8 +63,8 @@ export default {
           this.$q.notify({ type: 'positive', position: 'center', message: response.data.message })
         })
         .catch(error => {
-          // خطاهای اعتبارسنجی را interceptor در boot/axios نمایش می‌دهد
-          if (error.response?.data?.errors) return
+          // پیام خطاهای سرور را interceptor در boot/axios نمایش می‌دهد
+          if (error.response) return
           const msg = error.response?.data?.message || 'خطا در ویرایش درصد معرف'
           this.$q.notify({ type: 'negative', position: 'center', message: msg })
         })
