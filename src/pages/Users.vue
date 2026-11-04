@@ -63,6 +63,9 @@
               <q-input outlined v-model="newUserName"
                        label="نام"/>
 
+              <q-input outlined dir="ltr" v-model="newUserMobile"
+                       label="شماره همراه (برای پیامک ارجاع)"/>
+
               <q-input outlined dir="ltr" v-model="newUserUsername"
                        label="نام کاربری"/>
 
@@ -118,6 +121,9 @@
           <q-input outlined v-model="editUserName"
                    label="نام"/>
 
+          <q-input outlined dir="ltr" v-model="editUserMobile"
+                   label="شماره همراه (برای پیامک ارجاع)"/>
+
           <q-input outlined dir="ltr" v-model="editUserUsername"
                    label="نام کاربری"/>
 
@@ -170,12 +176,14 @@ export default {
       newUserPassword: '',
       newUserRePassword: '',
       newUserUsername: '',
+      newUserMobile: '',
       newUserName: '',
       newUserRole: null,
 
       editUserPassword: '',
       editUserRePassword: '',
       editUserUsername: '',
+      editUserMobile: '',
       editUserName: '',
       editUserUuid: '',
       editUserRole: null,
@@ -214,6 +222,7 @@ export default {
       const payload = {
         name: this.newUserName,
         username: this.newUserUsername,
+        mobile: this.newUserMobile,
         password: this.newUserPassword,
         rePassword: this.newUserRePassword,
         role: this.newUserRole,
@@ -231,6 +240,7 @@ export default {
         .then(() => {
           this.newUserName = '';
           this.newUserUsername = '';
+          this.newUserMobile = '';
           this.newUserPassword = '';
           this.newUserRePassword = '';
           this.newUserRole = null;
@@ -252,6 +262,7 @@ export default {
         id: this.editUserUuid,
         name: this.editUserName,
         username: this.editUserUsername,
+        mobile: this.editUserMobile,
         password: this.editUserPassword,
         rePassword: this.editUserRePassword,
         role: this.editUserRole,
@@ -282,6 +293,7 @@ export default {
     openEditUserDlg(user) {
       this.editUserDlg = true
       this.editUserUsername = user.username
+      this.editUserMobile = user.mobile || ''
       this.editUserName = user.name
       this.editUserRole = user.role
       this.editUserUuid = user.id

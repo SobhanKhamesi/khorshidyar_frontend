@@ -6,12 +6,19 @@
       <div class="text-grey q-mt-sm">در حال دریافت اطلاعات سرویس نصب...</div>
     </div>
 
-    <q-form v-else @submit.prevent="submitForm('final')">
+    <q-form v-else @submit.prevent="submitForm('refer')">
 
       <q-card flat class="border-radius-card">
-        <q-card-section>
+        <q-card-section class="row items-center q-gutter-sm">
           <div class="text-h6">ویرایش سرویس نصب</div>
+          <q-badge v-if="stageLabel" color="indigo" class="q-pa-sm">{{ stageLabel }}</q-badge>
         </q-card-section>
+        <q-banner v-if="isCompleted" class="bg-green-1 text-positive q-mx-md q-mb-md" rounded>
+          این سرویس نصب تکمیل نهایی شده و قابل ویرایش نیست.
+        </q-banner>
+        <q-banner v-else-if="isReferred" class="bg-blue-1 text-indigo q-mx-md q-mb-md" rounded>
+          این سرویس به نصاب ارجاع شده است. در صورت تغییر نصاب یا زمان نصب، برای نصاب جدید و مشتری پیامک ارسال می‌شود.
+        </q-banner>
         <q-separator/>
         <q-card-section>
           <div class="row q-col-gutter-md">
@@ -85,22 +92,29 @@
 
           <q-card flat class="border-radius-card">
             <q-card-section>
-              <div class="text-subtitle1 q-mb-md">اطلاعات نصاب ها</div>
+              <div class="row items-center q-mb-md">
+                <div class="text-subtitle1 col">اطلاعات نصاب ها</div>
+                <q-btn-toggle
+                    v-model="installerMode"
+                    rounded unelevated no-caps dense
+                    toggle-color="accent"
+                    class="q-px-xs"
+                    :options="[{label: 'یک نصاب برای کل پروژه', value: 1}, {label: 'انتخاب جداگانه نصاب ها', value: 2}]"/>
+              </div>
 
-              <div v-for="role in installerRoles" :key="role.key" class="q-mb-lg">
+              <div v-for="role in visibleRoles" :key="role.key" class="q-mb-lg">
                 <div class="text-caption text-grey-8 q-mb-xs">{{ role.label }}</div>
                 <div class="row q-col-gutter-md items-start">
 
                   <div class="col-md-5 col-xs-12">
                     <q-select
-                        option-label="name"
+                        :option-label="installerLabel"
                         option-value="id"
                         outlined
                         dense
                         v-model="installers[role.key].installer"
                         label="انتخاب نصاب"
-                        :options="installerOptions"
-                        @update:model-value="onInstallerContextChanged(role)">
+                        :options="installerOptions">
                       <template v-slot:after>
                         <q-btn @click.prevent="openNewInstallerDlg(role.key)" icon="person_add" dense flat rounded/>
                       </template>
@@ -114,15 +128,13 @@
 
                   <div class="col-md-3 col-xs-6">
                     <q-input mask="####/##/##" outlined dense dir="ltr"
-                             v-model="installers[role.key].date" label="تاریخ نصب"
-                             @update:model-value="onInstallerContextChanged(role)">
+                             v-model="installers[role.key].date" label="تاریخ نصب">
                       <template v-slot:prepend>
                         <q-icon name="event" class="cursor-pointer">
                           <q-popup-proxy transition-show="scale" transition-hide="scale">
                             <q-date today-btn
                                     calendar="persian"
-                                    v-model="installers[role.key].date" mask="YYYY-MM-DD"
-                                    @update:model-value="onInstallerContextChanged(role)">
+                                    v-model="installers[role.key].date" mask="YYYY-MM-DD">
                               <q-btn v-close-popup color="accent" outline rounded label="بستن"/>
                             </q-date>
                           </q-popup-proxy>
@@ -160,7 +172,7 @@
                   </div>
 
                 </div>
-                <q-separator v-if="role.key !== installerRoles[installerRoles.length - 1].key" class="q-mt-md"/>
+                <q-separator v-if="role.key !== visibleRoles[visibleRoles.length - 1].key" class="q-mt-md"/>
               </div>
 
             </q-card-section>
@@ -168,68 +180,11 @@
 
           <q-card flat class="border-radius-card">
             <q-card-section>
-              <div class="text-subtitle1 q-mb-md">اقلام مصرفی</div>
-
-              <div
-                  v-for="(item, index) in consumableItems"
-                  :key="index"
-                  class="row q-col-gutter-md items-start q-mb-sm">
-
-                <div class="col-md-7 col-xs-12">
-                  <q-select
-                      option-label="name"
-                      option-value="id"
-                      outlined
-                      dense
-                      use-input
-                      clearable
-                      v-model="item.product"
-                      label="انتخاب محصول"
-                      :options="productOptions"
-                      @filter="filterProducts"
-                      behavior="dialog">
-                    <template v-slot:no-option>
-                      <q-item>
-                        <q-item-section class="text-grey">یافت نشد</q-item-section>
-                      </q-item>
-                    </template>
-                  </q-select>
-                </div>
-
-                <div class="col-md-3 col-xs-8">
-                  <q-input
-                      outlined
-                      dense
-                      type="number"
-                      min="0"
-                      step="1"
-                      v-model.number="item.quantity"
-                      label="تعداد"/>
-                </div>
-
-                <div class="col-md-2 col-xs-4 flex flex-center">
-                  <q-btn
-                      v-if="index >= 1"
-                      round
-                      flat
-                      dense
-                      color="negative"
-                      icon="delete"
-                      @click.prevent="removeConsumableRow(index)">
-                    <q-tooltip>حذف ردیف</q-tooltip>
-                  </q-btn>
-                </div>
-
+              <div class="text-subtitle1">اقلام پیش‌نیاز سرویس نصب</div>
+              <div class="text-caption text-grey-7 q-mb-md">
+                اقلامی که نصاب برای انجام این سرویس نیاز دارد (نام محصول و تعداد با واحد)
               </div>
-
-              <q-btn
-                  outline
-                  rounded
-                  dense
-                  color="accent"
-                  icon="add"
-                  label="افزودن ردیف"
-                  @click.prevent="addConsumableRow"/>
+              <installation-items-editor v-model="requiredItems"/>
             </q-card-section>
           </q-card>
 
@@ -331,20 +286,24 @@
             class="col"
             color="negative"
             label="انصراف"
-            :to="{ name: 'InstallationServiceList' }"/>
-        <q-btn
-            outline
-            rounded
-            class="col"
-            color="grey-8"
-            label="ذخیره به صورت موقت"
-            @click.prevent="submitForm('temporary')"/>
-        <q-btn
-            type="submit"
-            rounded
-            class="col"
-            color="accent"
-            label="ذخیره نصب نهایی"/>
+            :to="{ name: 'InstallServiceList' }"/>
+        <template v-if="!isCompleted">
+          <q-btn
+              v-if="!isReferred"
+              outline
+              rounded
+              class="col"
+              color="grey-8"
+              label="ذخیره پیش‌نویس (بدون ارجاع)"
+              @click.prevent="submitForm('draft')"/>
+          <q-btn
+              type="submit"
+              rounded
+              class="col"
+              color="accent"
+              :icon="isReferred ? 'save' : 'send'"
+              :label="isReferred ? 'ذخیره تغییرات' : 'ارجاع به نصاب و ارسال پیامک'"/>
+        </template>
       </q-card-actions>
 
     </q-form>
@@ -354,8 +313,7 @@
               :full-width="!$q.screen.gt.sm"
               :full-height="!$q.screen.gt.sm"
               transition-show="slide-up"
-              transition-hide="slide-down"
-    >
+              transition-hide="slide-down">
       <q-card class="dialog-card-big">
         <q-form @submit.prevent="submitNewCustomer()">
           <q-card-section>
@@ -394,6 +352,9 @@
             <div class="q-gutter-md q-mt-sm">
               <q-input outlined v-model="newInstallerUserName" label="نام کاربری"/>
             </div>
+            <div class="q-gutter-md q-mt-sm">
+              <q-input outlined dir="ltr" v-model="newInstallerMobile" label="شماره همراه (برای پیامک ارجاع)"/>
+            </div>
           </q-card-section>
           <q-separator/>
           <q-card-actions align="center">
@@ -410,9 +371,27 @@
 <script>
 import {QSpinnerPuff} from "quasar";
 import {api} from 'boot/axios'
+import InstallationItemsEditor from 'components/InstallationItemsEditor.vue'
+import {STAGE} from 'components/InstallationWorkflowDialog.vue'
 
 export default {
   name: "EditInstallationService",
+  components: {InstallationItemsEditor},
+
+  computed: {
+    // در حالت یک نصاب، کل پروژه در ردیف panel به یک نصاب ارجاع می شود
+    visibleRoles() {
+      return this.installerMode === 1
+          ? [{key: 'panel', label: 'نصاب کل پروژه (پنل، سیم کشی و راه اندازی)'}]
+          : this.installerRoles
+    },
+    isReferred() {
+      return this.stage !== null && this.stage !== STAGE.DRAFT
+    },
+    isCompleted() {
+      return this.stage === STAGE.COMPLETED
+    }
+  },
 
   data() {
     return {
@@ -424,7 +403,8 @@ export default {
       isHydrating: false,
 
       customer_id: null,
-      status: null,
+      stage: null,
+      stageLabel: '',
 
       newCustomerDlg: false,
       newCustomerName: '',
@@ -457,17 +437,16 @@ export default {
       },
       installerOptions: [],
 
-      products: [],
-      productOptions: [],
-      consumableItems: [
-        {product: null, quantity: 1},
-        {product: null, quantity: 1},
-        {product: null, quantity: 1}
-      ],
+      // اقلام پیش نیاز که مدیر هنگام ارجاع به نصاب مشخص می کند
+      requiredItems: [{product: null, quantity: 1}],
+
+      // 1: یک نصاب برای کل پروژه (پیش فرض)، 2: انتخاب جداگانه نصاب پنل / سیم کشی / راه اندازی
+      installerMode: 1,
 
       newInstallerDlg: false,
       newInstallerName: '',
       newInstallerUserName: '',
+      newInstallerMobile: '',
 
       installerCalendarDlg: false,
       installerCalendarTarget: null,
@@ -565,7 +544,8 @@ export default {
 
     getCustomerAutomations(customerId) {
       this.automationsLoading = true
-      api.get(`installation-service/customer/${customerId}/automations`)
+      // فروش های موفقی که به سرویس نصب دیگری ارجاع شده اند نمایش داده نمی شوند
+      api.get(`installation-service/customer/${customerId}/automations`, {params: {except: this.serviceId}})
           .then(response => {
             this.customerAutomations = response.data.data
           })
@@ -588,9 +568,14 @@ export default {
 
     surveyTypeLabel(type) {
       if (type === 1) return 'کارشناسی خانگی'
-      if (type === 2) return 'کارشناسی صنعتی'
+      if (type === 2) return 'کارشناسی صنعتی'
       if (type === 3) return 'ثبت شده از مشتری'
       return 'نامشخص'
+    },
+
+    installerLabel(user) {
+      if (!user) return ''
+      return user.mobile ? `${user.name} (${user.mobile})` : user.name
     },
 
     getInstallers() {
@@ -598,45 +583,6 @@ export default {
           .then(response => {
             this.installerOptions = response.data.data
           })
-    },
-
-    getProducts() {
-      api.get('products/list')
-          .then(response => {
-            this.products = response.data.data
-            this.productOptions = response.data.data
-          })
-    },
-
-    filterProducts(val, update) {
-      if (val === '') {
-        update(() => {
-          this.productOptions = this.products
-        })
-        return
-      }
-      update(() => {
-        const needle = val.toLowerCase()
-        this.productOptions = this.products.filter(
-            p => (p.name || '').toLowerCase().indexOf(needle) > -1
-        )
-      })
-    },
-
-    addConsumableRow() {
-      this.consumableItems.push({product: null, quantity: 1})
-    },
-
-    removeConsumableRow(index) {
-      this.consumableItems.splice(index, 1)
-    },
-
-    resetConsumableItems() {
-      this.consumableItems = [
-        {product: null, quantity: 1},
-        {product: null, quantity: 1},
-        {product: null, quantity: 1}
-      ]
     },
 
     openNewInstallerDlg(roleKey) {
@@ -655,6 +601,7 @@ export default {
       let payload = {}
       payload.name = this.newInstallerName
       payload.username = this.newInstallerUserName
+      payload.mobile = this.newInstallerMobile
 
       api.post('users/quick-add', payload)
           .then(response => {
@@ -672,6 +619,8 @@ export default {
             }
 
             this.newInstallerName = ''
+            this.newInstallerUserName = ''
+            this.newInstallerMobile = ''
             this.newInstallerTargetRole = null
             this.newInstallerDlg = false
             this.$q.loading.hide();
@@ -695,7 +644,9 @@ export default {
     populateForm(service) {
       this.isHydrating = true
 
-      this.status = service.status
+      this.stage = Number(service.stage)
+      this.stageLabel = service.stage_label
+      this.installerMode = Number(service.installer_mode) || 2
 
       // نوع خرید در فرم به صورت رشته ('1'/'2') نگه داشته می‌شود (به خاطر q-radio)
       this.purchaseSource = String(service.purchase_source)
@@ -736,15 +687,11 @@ export default {
         }
       }
 
-      // اقلام مصرفی
-      const items = service.installation_service_items || []
-      this.consumableItems = items.length
+      // اقلام پیش نیاز
+      const items = service.required_items || []
+      this.requiredItems = items.length
           ? items.map(item => ({product: item.product || null, quantity: item.quantity}))
-          : [
-            {product: null, quantity: 1},
-            {product: null, quantity: 1},
-            {product: null, quantity: 1}
-          ]
+          : [{product: null, quantity: 1}]
 
       this.$nextTick(() => {
         this.isHydrating = false
@@ -762,65 +709,69 @@ export default {
         wiring: {installer: null, date: '', startTime: '', endTime: ''},
         commissioning: {installer: null, date: '', startTime: '', endTime: ''}
       }
-      this.resetConsumableItems()
+      this.requiredItems = [{product: null, quantity: 1}]
     },
 
-    validateFinal() {
-      for (const role of this.installerRoles) {
-        const item = this.installers[role.key]
-        if (!item.installer || !item.date || !item.startTime || !item.endTime) {
-          this.$q.notify({
-            type: 'negative',
-            position: 'bottom',
-            message: `اطلاعات «${role.label}» تکمیل نشده است`
-          })
-          return false
-        }
-        if (item.startTime >= item.endTime) {
-          this.$q.notify({
-            type: 'negative',
-            position: 'bottom',
-            message: `ساعت پایان «${role.label}» باید بعد از ساعت شروع باشد`
-          })
-          return false
-        }
-      }
-      return true
+    notifyError(message) {
+      this.$q.notify({type: 'negative', position: 'bottom', message})
+      return false
     },
 
-    validateTemporary() {
-      for (const role of this.installerRoles) {
+    // هر نصاب یا کامل پر شود یا کاملاً خالی بماند
+    validateInstallers() {
+      for (const role of this.visibleRoles) {
         const item = this.installers[role.key]
         const hasAny = item.installer || item.date || item.startTime || item.endTime
         const hasAll = item.installer && item.date && item.startTime && item.endTime
 
-        if (hasAny && !hasAll) {
-          this.$q.notify({
-            type: 'negative',
-            position: 'bottom',
-            message: `اطلاعات «${role.label}» را کامل وارد کنید یا کاملاً خالی بگذارید`
-          })
-          return false
-        }
-        if (hasAll && item.startTime >= item.endTime) {
-          this.$q.notify({
-            type: 'negative',
-            position: 'bottom',
-            message: `ساعت پایان «${role.label}» باید بعد از ساعت شروع باشد`
-          })
-          return false
-        }
+        if (hasAny && !hasAll)
+          return this.notifyError(`اطلاعات «${role.label}» را کامل وارد کنید یا کاملاً خالی بگذارید`)
+        if (hasAll && item.startTime >= item.endTime)
+          return this.notifyError(`ساعت پایان «${role.label}» باید بعد از ساعت شروع باشد`)
       }
       return true
     },
 
-    submitForm(status) {
-      if (status === 'final' && !this.validateFinal()) {
-        return
+    // ارجاع (و هر ذخیره پس از ارجاع): حداقل یک نصاب + اقلام پیش نیاز الزامی است
+    validateRefer() {
+      if (!this.validateInstallers()) return false
+
+      const anyInstaller = this.visibleRoles.some(role => {
+        const item = this.installers[role.key]
+        return item.installer && item.date && item.startTime && item.endTime
+      })
+      if (!anyInstaller)
+        return this.notifyError('برای ارجاع، حداقل یک نصاب همراه با تاریخ و ساعت نصب انتخاب کنید')
+
+      if (!this.requiredItemsPayload().length)
+        return this.notifyError('اقلام پیش‌نیاز این سرویس نصب را مشخص کنید')
+
+      return true
+    },
+
+    requiredItemsPayload() {
+      return this.requiredItems
+          .filter(item => item.product && Number(item.quantity) > 0)
+          .map(item => ({
+            product_id: item.product.id,
+            quantity: item.quantity
+          }))
+    },
+
+    installerPayload(roleKey) {
+      const item = this.installers[roleKey]
+      return {
+        installer_id: item.installer ? item.installer.id : null,
+        date: item.date,
+        start_time: item.startTime,
+        end_time: item.endTime
       }
-      if (status === 'temporary' && !this.validateTemporary()) {
-        return
-      }
+    },
+
+    submitForm(action) {
+      if (this.isCompleted) return
+      if (action === 'refer' && !this.validateRefer()) return
+      if (action === 'draft' && !this.validateInstallers()) return
 
       this.$q.loading.show({
         spinner: QSpinnerPuff,
@@ -830,7 +781,8 @@ export default {
       })
 
       const payload = {
-        status: status === 'final' ? 2 : 1,
+        action,
+        installer_mode: this.installerMode,
         customer_id: this.customer_id.id,
         purchase_source: this.purchaseSource,
         automation_id: this.purchaseSource === '1' ? this.selectedAutomationId : null,
@@ -838,44 +790,29 @@ export default {
         contact_number: this.contactNumber,
         description: this.productDescription,
         installers: {
-          panel: {
-            installer_id: this.installers.panel.installer ? this.installers.panel.installer.id : null,
-            date: this.installers.panel.date,
-            start_time: this.installers.panel.startTime,
-            end_time: this.installers.panel.endTime
-          },
-          wiring: {
-            installer_id: this.installers.wiring.installer ? this.installers.wiring.installer.id : null,
-            date: this.installers.wiring.date,
-            start_time: this.installers.wiring.startTime,
-            end_time: this.installers.wiring.endTime
-          },
-          commissioning: {
-            installer_id: this.installers.commissioning.installer ? this.installers.commissioning.installer.id : null,
-            date: this.installers.commissioning.date,
-            start_time: this.installers.commissioning.startTime,
-            end_time: this.installers.commissioning.endTime
-          }
+          panel: this.installerPayload('panel'),
+          // در حالت یک نصاب، فقط ردیف panel ارسال می شود و بک اند بقیه را لغو می کند
+          wiring: this.installerMode === 1 ? {} : this.installerPayload('wiring'),
+          commissioning: this.installerMode === 1 ? {} : this.installerPayload('commissioning')
         },
-        items: this.consumableItems
-            .filter(item => item.product && Number(item.quantity) > 0)
-            .map(item => ({
-              product_id: item.product.id,
-              quantity: item.quantity
-            }))
+        items: this.requiredItemsPayload()
       }
 
       api.put(`installation-service/${this.serviceId}`, payload)
           .then(response => {
 
             this.$q.notify({
-              timeout: 3000,
+              timeout: 4000,
               position: 'center',
               type: 'positive',
+              multiLine: true,
               message: response.data.message
             })
 
-            this.$router.push({name: 'InstallationServiceList'})
+            this.$router.push({name: 'InstallServiceList'})
+          })
+          .catch(() => {
+            // خطا توسط interceptor در boot/axios نمایش داده می شود
           })
           .finally(()=>{
             this.$q.loading.hide();
@@ -887,7 +824,6 @@ export default {
   created() {
     this.getCustomersAndLeads();
     this.getInstallers();
-    this.getProducts();
     this.fetchService();
   }
 }

@@ -109,7 +109,7 @@
                 </div>
 
                 <div class="col-md-6 col-xs-12">
-                  <q-input mask="####/##/##" outlined dir="ltr" v-model="followUpDate" label="تاریخ پیگیری مجدد">
+                  <q-input mask="####/##/##" outlined dir="ltr" v-model="followUpDate" label="تاریخ مراجعه نصاب">
                     <template v-slot:prepend>
                       <q-icon name="event" class="cursor-pointer">
                         <q-popup-proxy transition-show="scale" transition-hide="scale">
@@ -129,79 +129,39 @@
           </q-card>
           <q-card flat class="border-radius-card q-mt-md">
             <q-card-section>
-              <div class="text-subtitle1 q-mb-md">اطلاعات نصاب</div>
+              <div class="text-subtitle1 q-mb-md">سرویس نصب مرتبط</div>
 
-              <div class="row q-col-gutter-md items-start">
-                <div class="col-md-4 col-xs-12">
-                  <q-select
-                      option-label="name"
-                      option-value="id"
-                      outlined
-                      dense
-                      v-model="selectedInstaller"
-                      label="انتخاب نصاب"
-                      :options="installerOptions"
-                      clearable
-                      @update:model-value="onInstallerContextChanged">
-                    <template v-slot:after>
-                      <q-btn @click.prevent="openNewInstallerDlg" icon="person_add" dense flat rounded/>
-                    </template>
-                    <template v-slot:no-option>
-                      <q-item>
-                        <q-item-section class="text-grey">یافت نشد</q-item-section>
-                      </q-item>
-                    </template>
-                  </q-select>
-                </div>
+              <q-select
+                  option-label="title"
+                  option-value="id"
+                  outlined
+                  clearable
+                  v-model="installationService"
+                  label="سرویس نصب تکمیل شده‌ی مشتری (اختیاری)"
+                  :loading="loadingInstallations"
+                  :options="installationOptions"
+                  @update:model-value="onInstallationSelected">
+                <template v-slot:option="scope">
+                  <q-item v-bind="scope.itemProps">
+                    <q-item-section>
+                      <q-item-label>{{ scope.opt.title }}</q-item-label>
+                      <q-item-label caption v-if="scope.opt.project_installer">
+                        نصاب پروژه: {{ scope.opt.project_installer.name }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </template>
+                <template v-slot:no-option>
+                  <q-item>
+                    <q-item-section class="text-grey">سرویس نصب تکمیل شده‌ای برای این مشتری یافت نشد</q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
 
-                <div class="col-md-3 col-xs-6">
-                  <q-input mask="####/##/##" outlined dense dir="ltr"
-                           v-model="installerDate" label="تاریخ نصب"
-                           @update:model-value="onInstallerContextChanged">
-                    <template v-slot:prepend>
-                      <q-icon name="event" class="cursor-pointer">
-                        <q-popup-proxy transition-show="scale" transition-hide="scale">
-                          <q-date today-btn
-                                  calendar="persian"
-                                  v-model="installerDate" mask="YYYY-MM-DD"
-                                  @update:model-value="onInstallerContextChanged">
-                            <q-btn v-close-popup color="accent" outline rounded label="بستن"/>
-                          </q-date>
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-
-                <div class="col-md-2 col-xs-6">
-                  <q-input outlined dense dir="ltr" v-model="installerStartTime" label="ساعت شروع">
-                    <template v-slot:prepend>
-                      <q-icon name="access_time" class="cursor-pointer">
-                        <q-popup-proxy transition-show="scale" transition-hide="scale">
-                          <q-time v-model="installerStartTime" format24h>
-                            <q-btn v-close-popup color="accent" outline rounded label="بستن"/>
-                          </q-time>
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-
-                <div class="col-md-2 col-xs-6">
-                  <q-input outlined dense dir="ltr" v-model="installerEndTime" label="ساعت پایان">
-                    <template v-slot:prepend>
-                      <q-icon name="access_time" class="cursor-pointer">
-                        <q-popup-proxy transition-show="scale" transition-hide="scale">
-                          <q-time v-model="installerEndTime" format24h>
-                            <q-btn v-close-popup color="accent" outline rounded label="بستن"/>
-                          </q-time>
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
+              <div class="text-caption text-grey-7 q-mt-sm">
+                با انتخاب سرویس نصب، نصاب همان پروژه به عنوان مسئول این خدمت انتخاب می‌شود.
+                پس از ثبت، نام و شماره نصاب و تاریخ مراجعه برای مشتری و اطلاع کار جدید برای نصاب پیامک می‌شود.
               </div>
-
             </q-card-section>
           </q-card>
         </div>
@@ -255,7 +215,7 @@
                       <div v-if="service.responsible_user">مسئول: {{ service.responsible_user.name }}</div>
                       <div>تاریخ ثبت درخواست: {{ service.jalali_request_date || '—' }}</div>
                       <div v-if="service.jalali_follow_up_date">تاریخ پیگیری مجدد: {{ service.jalali_follow_up_date }}</div>
-                      <div v-if="service.installation_service_id">مرتبط با سرویس نصب #{{ service.installation_service_id }}</div>
+                      <div v-if="service.installation_service_id">مرتبط با {{ service.installation_service_title || 'سرویس نصب' }}</div>
                       <div v-if="service.resolution_description">نتیجه پیگیری: {{ service.resolution_description }}</div>
                     </q-item-label>
 
@@ -276,29 +236,6 @@
         <q-btn type="submit" rounded class="full-width" color="accent" label="ثبت خدمت پس از فروش"/>
       </q-card-actions>
     </q-form>
-
-    <q-dialog v-model="newInstallerDlg">
-      <q-card class="dialog-card-big">
-        <q-form @submit.prevent="submitNewInstaller()">
-          <q-card-section>
-            <div class="text-h6">نصاب جدید</div>
-          </q-card-section>
-          <q-card-section class="q-pt-none">
-            <div class="q-gutter-md">
-              <q-input outlined v-model="newInstallerName" label="نام"/>
-            </div>
-            <div class="q-gutter-md q-mt-sm">
-              <q-input outlined v-model="newInstallerUserName" label="نام کاربری"/>
-            </div>
-          </q-card-section>
-          <q-separator/>
-          <q-card-actions align="center">
-            <q-btn outline rounded color="accent" label="انصراف" v-close-popup/>
-            <q-btn color="accent" rounded label="ثبت" type="submit"/>
-          </q-card-actions>
-        </q-form>
-      </q-card>
-    </q-dialog>
 
     <q-dialog v-model="newCustomerDlg"
               :maximized="!$q.screen.gt.sm"
@@ -419,24 +356,15 @@ export default {
 
       followUpDate: '',
 
+      installationService: null,
+      installationOptions: [],
+      loadingInstallations: false,
+
       completeDlg: false,
       completingServiceId: null,
       completeResolutionDescription: '',
       sendSms: true,
 
-      selectedInstaller: null,
-      installerDate: '',
-      installerStartTime: '',
-      installerEndTime: '',
-      installerOptions: [],
-      newInstallerDlg: false,
-      newInstallerUserName: '',
-      newInstallerName: '',
-      installerCalendarDlg: false,
-      installerCalendarLoading: false,
-      installerWorkingDays: [],
-      installerDayAvailability: null,
-      installerDayAvailabilityLoading: false
     }
   },
 
@@ -445,67 +373,27 @@ export default {
     // هیچ بازه‌ی آماده‌ای برای کلیک/انتخاب نمی‌سازد. کاربر همچنان خودش ساعت
     // شروع و پایان دلخواه را در فرم تایپ می‌کند.
 
-    onInstallerContextChanged() {
-      this.installerDayAvailability = null
-      if (this.installerCalendarDlg && this.selectedInstaller && this.installerDate) {
-        this.fetchInstallerDayAvailability(this.selectedInstaller.id, this.installerDate)
-      }
-    },
-
-    getInstallers() {
-      api.get('installers')
+    // سرویس‌های نصب تکمیل شده‌ی مشتری به همراه نصاب پروژه
+    getCustomerInstallations(customerId, selectedId = null) {
+      this.installationOptions = []
+      if (!customerId) return
+      this.loadingInstallations = true
+      api.get(`after-sales-service/customer-installations/${customerId}`)
           .then(response => {
-            this.installerOptions = response.data.data
+            this.installationOptions = response.data.data
+            if (selectedId)
+              this.installationService = this.installationOptions.find(s => s.id === selectedId) || this.installationService
           })
-          .catch((error) => this.notifyError(error))
-    },
-
-    openNewInstallerDlg(roleKey) {
-      this.newInstallerTargetRole = roleKey
-      this.newInstallerDlg = true
-    },
-
-    submitNewInstaller() {
-      this.$q.loading.show({
-        spinner: QSpinnerPuff,
-        spinnerSize: 140,
-        message: 'در حال پردازش اطلاعات',
-        sanitize: true
-      })
-
-      let payload = {}
-      payload.name = this.newInstallerName
-      payload.username = this.newInstallerUserName
-
-      api.post('users/quick-add', payload)
-          .then(response => {
-            this.$q.notify({
-              timeout: 3000,
-              position: 'center',
-              type: 'positive',
-              message: response.data.message
-            })
-
-            this.getInstallers()
-
-            if (this.newInstallerTargetRole) {
-              this.installers[this.newInstallerTargetRole].installer = response.data.data
-            }
-
-            this.newInstallerName = ''
-            this.newInstallerTargetRole = null
-            this.newInstallerDlg = false
-            this.$q.loading.hide();
+          .finally(() => {
+            this.loadingInstallations = false
           })
-          .catch((error) => {
-            this.$q.loading.hide();
-            this.notifyError(error)
-          });
     },
 
-    weekdayLabel(weekday) {
-      const labels = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه']
-      return labels[weekday] ?? '-'
+    // مسئول خدمت پس از فروش، نصاب خود پروژه است
+    onInstallationSelected(service) {
+      const installer = service && service.project_installer
+      if (!installer) return
+      this.responsibleUserId = this.responsibleUserOptions.find(u => u.id === installer.id) || installer
     },
 
     notifyError(error) {
@@ -538,8 +426,11 @@ export default {
 
     onCustomerSelected(customer) {
       this.customerServiceHistory = []
+      this.installationService = null
+      this.installationOptions = []
       if (!customer) return
       this.getCustomerServiceHistory(customer.id)
+      this.getCustomerInstallations(customer.id)
     },
     submitNewCustomer() {
       this.$q.loading.show({
@@ -706,6 +597,7 @@ export default {
       this.serviceTypeId = null
       this.responsibleUserId = null
       this.followUpDate = ''
+      this.installationService = null
     },
 
     submitForm() {
@@ -721,12 +613,8 @@ export default {
         this.$q.notify({type: 'negative', position: 'bottom', message: 'مسئول این خدمت را انتخاب کنید'})
         return
       }
-      if (this.selectedInstaller && (!this.installerDate || !this.installerStartTime || !this.installerEndTime)) {
-        this.$q.notify({type: 'negative', position: 'bottom', message: 'تاریخ و ساعت شروع/پایان نصب را کامل وارد کنید'})
-        return
-      }
-      if (this.installerStartTime && this.installerEndTime && this.installerStartTime >= this.installerEndTime) {
-        this.$q.notify({type: 'negative', position: 'bottom', message: 'ساعت پایان باید بعد از ساعت شروع باشد'})
+      if (!this.followUpDate) {
+        this.$q.notify({type: 'negative', position: 'bottom', message: 'تاریخ مراجعه نصاب را وارد کنید'})
         return
       }
 
@@ -744,10 +632,7 @@ export default {
         service_type_id: this.serviceTypeId ? this.serviceTypeId.id : null,
         responsible_user_id: this.responsibleUserId ? this.responsibleUserId.id : null,
         follow_up_date: this.followUpDate,
-        installer_id: this.selectedInstaller ? this.selectedInstaller.id : null,
-        installer_date: this.installerDate,
-        installer_start_time: this.installerStartTime,
-        installer_end_time: this.installerEndTime,
+        installation_service_id: this.installationService ? this.installationService.id : null,
       }
 
       api.post('after-sales-service/store', payload)
@@ -775,7 +660,6 @@ export default {
     this.getCustomersAndLeads();
     this.getServiceTypes();
     this.getResponsibleUsers();
-    this.getInstallers();
   }
 }
 </script>

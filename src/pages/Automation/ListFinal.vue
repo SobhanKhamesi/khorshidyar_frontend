@@ -88,6 +88,21 @@
               <q-td key="date" :props="props">
                 {{ props.row.jalali_date }}
               </q-td>
+              <q-td key="installation" :props="props">
+                <q-btn
+                    v-if="!props.row.installation_service"
+                    rounded dense no-caps color="accent" icon="engineering" label="ارجاع به نصاب"
+                    class="q-px-sm"
+                    :to="{ name: 'InstallServiceCreate', query: {customer: props.row.customer_id, automation: props.row.id} }"/>
+                <q-btn
+                    v-else
+                    flat dense no-caps
+                    :to="{ name: 'InstallServiceList' }">
+                  <q-badge :color="props.row.installation_service.stage === 6 ? 'positive' : 'blue'" class="q-pa-xs">
+                    {{ props.row.installation_service.stage_label }}
+                  </q-badge>
+                </q-btn>
+              </q-td>
               <q-td key="action" :props="props" class="q-gutter-x-sm">
                 <q-btn
                     v-if="hasContractInfo(props.row)"
@@ -297,6 +312,7 @@ export default {
         {name: 'survey_type', field: 'survey_type', align: 'center', label: 'نوع کارشناسی'},
         {name: 'final_price', field: 'final_price', align: 'center', label: 'مبلغ (تومان)'},
         {name: 'date', field: 'date', align: 'center', label: 'تاریخ', sortable: true},
+        {name: 'installation', field: row => row.installation_service ? row.installation_service.stage_label : 'ارجاع نشده', align: 'center', label: 'سرویس نصب'},
         {name: 'action', field: 'action', align: 'center', label: 'عملیات'}
       ],
       rows: [],

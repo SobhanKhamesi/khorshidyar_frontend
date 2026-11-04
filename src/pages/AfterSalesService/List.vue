@@ -105,7 +105,7 @@
               <q-badge :color="sourceColor(details.source)" outline>{{ details.source_label }}</q-badge>
             </div>
             <div class="col-md-6 col-xs-12">
-              <div class="text-caption text-grey-7">مسئول</div>
+              <div class="text-caption text-grey-7">مسئول (نصاب)</div>
               <div class="text-body1">{{ details.responsible_user ? details.responsible_user.name : '-' }}</div>
             </div>
             <div class="col-md-6 col-xs-12">
@@ -113,7 +113,7 @@
               <div class="text-body1">{{ details.jalali_request_date || '-' }}</div>
             </div>
             <div class="col-md-6 col-xs-12">
-              <div class="text-caption text-grey-7">تاریخ پیگیری مجدد</div>
+              <div class="text-caption text-grey-7">تاریخ مراجعه نصاب</div>
               <div class="text-body1">{{ details.jalali_follow_up_date || '-' }}</div>
             </div>
             <div class="col-md-6 col-xs-12">
@@ -130,7 +130,7 @@
             </div>
             <div class="col-12" v-if="details.installation_service_id">
               <div class="text-caption text-grey-7">مرتبط با سرویس نصب</div>
-              <div class="text-body1">#{{ details.installation_service_id }}</div>
+              <div class="text-body1">{{ details.installation_service_title || 'سرویس نصب' }}</div>
             </div>
           </div>
         </q-card-section>
@@ -252,7 +252,7 @@ export default {
           name: 'follow_up_date',
           field: 'follow_up_date',
           align: 'center',
-          label: 'تاریخ پیگیری مجدد',
+          label: 'تاریخ مراجعه نصاب',
           sortable: true
         },
         {name: 'action', field: 'action', align: 'center', label: 'عملیات'}

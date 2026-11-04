@@ -8,14 +8,23 @@
       <q-separator/>
 
       <q-card-section>
-        <div class="row items-center q-gutter-x-sm q-mb-sm">
+        <div class="row items-center q-gutter-sm q-mb-sm">
           <div class="legend-box legend-box-urgent"></div>
           <span class="text-caption text-grey-8">دارای نصب امروز یا فردا</span>
+          <q-space/>
+          <q-toggle v-model="onlyMyTurn" label="فقط موارد منتظر اقدام من" color="accent"/>
+          <q-select
+              outlined dense
+              style="min-width: 260px"
+              v-model="stageFilter"
+              :options="stageFilterOptions"
+              map-options emit-value
+              label="مرحله"/>
         </div>
         <q-table
             :loading="loading"
             flat bordered class="border-radius-table"
-            :rows="rows"
+            :rows="filteredRows"
             :filter="filter"
             :columns="columns"
             :rows-per-page-options="[10]"
@@ -62,16 +71,20 @@
                 </q-badge>
               </q-td>
 
-              <q-td key="status" :props="props">
-                <q-badge :color="statusColor(props.row.status)">
-                  {{ statusLabel(props.row.status) }}
+              <q-td key="stage" :props="props">
+                <q-badge :color="stageColor(props.row.stage)" class="q-pa-xs">
+                  {{ props.row.stage_label }}
                 </q-badge>
+                <div v-if="props.row.technical_expert && props.row.stage >= STAGE.UNDER_REVIEW"
+                     class="text-caption text-grey-7">
+                  کارشناس: {{ props.row.technical_expert.name }}
+                </div>
               </q-td>
 
               <q-td key="installers" :props="props">
                 <div class="q-gutter-xs">
                   <q-badge
-                      v-for="role in installerRoles"
+                      v-for="role in rolesOf(props.row)"
                       :key="role.key"
                       :color="installerBadgeColor(props.row, role.key)"
                   >
@@ -85,20 +98,32 @@
               </q-td>
 
               <q-td key="action" :props="props" class="q-gutter-x-sm">
+                <!-- اقدام بعدی گردش کار -->
+                <q-btn
+                    v-if="nextAction(props.row)"
+                    rounded dense no-caps
+                    class="q-px-sm"
+                    :color="nextAction(props.row).color"
+                    :icon="nextAction(props.row).icon"
+                    :label="nextAction(props.row).label"
+                    @click.prevent="openWorkflow(props.row, nextAction(props.row).mode)"/>
+
                 <q-btn
                     @click.prevent="showDetails(props.row.id)"
-                    title="مشخصات بیشتر" dense round color="brown" icon="info"/>
+                    title="مشخصات و تاریخچه" dense round color="brown" icon="info"/>
                 <q-btn
-                    @click.prevent="showConsumables(props.row.id)"
-                    title="اقلام مصرفی" dense round color="teal" icon="inventory_2"/>
+                    @click.prevent="showConsumables(props.row)"
+                    title="اقلام پیش‌نیاز و مصرفی" dense round color="teal" icon="inventory_2"/>
 
                 <q-btn :href="'/v1/print_install_service/' + props.row.id" target="_blank" title="پرینت" dense round
                        color="positive" icon="print"/>
 
-                <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
-                       :to="{ name:'InstallServiceEdit', params:{id:props.row.id} }"/>
-                <q-btn title="حذف" dense round color="negative" icon="delete"
-                       @click.prevent="deleteConfirmation(props.row.id)"/>
+                <template v-if="!isInstaller">
+                  <q-btn v-if="props.row.stage !== STAGE.COMPLETED" title="ویرایش" dense round color="yellow-9" icon="edit"
+                         :to="{ name:'InstallServiceEdit', params:{id:props.row.id} }"/>
+                  <q-btn title="حذف" dense round color="negative" icon="delete"
+                         @click.prevent="deleteConfirmation(props.row.id)"/>
+                </template>
               </q-td>
             </q-tr>
           </template>
@@ -157,10 +182,20 @@
             </div>
 
             <div class="col-md-6 col-xs-12">
-              <div class="text-caption text-grey-7">وضعیت</div>
-              <q-badge :color="statusColor(details.status)">
-                {{ statusLabel(details.status) }}
+              <div class="text-caption text-grey-7">مرحله</div>
+              <q-badge :color="stageColor(details.stage)">
+                {{ details.stage_label }}
               </q-badge>
+            </div>
+
+            <div class="col-md-6 col-xs-12" v-if="details.automation">
+              <div class="text-caption text-grey-7">فروش موفق مرتبط</div>
+              <div class="text-body1">فاکتور {{ details.automation.invoice_number || '-' }}</div>
+            </div>
+
+            <div class="col-md-6 col-xs-12" v-if="details.technical_expert">
+              <div class="text-caption text-grey-7">کارشناس فنی بررسی کننده</div>
+              <div class="text-body1">{{ details.technical_expert.name }}</div>
             </div>
 
             <div class="col-12" v-if="details.description">
@@ -173,7 +208,7 @@
               <div class="text-subtitle2 q-mb-sm">نصاب ها</div>
 
               <q-list bordered separator dense>
-                <q-item v-for="role in installerRoles" :key="role.key">
+                <q-item v-for="role in rolesOf(details)" :key="role.key">
                   <q-item-section>
                     <q-item-label>{{ role.label }}</q-item-label>
                     <q-item-label caption>
@@ -189,6 +224,30 @@
               </q-list>
             </div>
 
+            <div class="col-md-6 col-xs-12">
+              <div class="text-subtitle2 q-mb-sm">اقلام پیش‌نیاز</div>
+              <installation-items-table :items="details.required_items" empty-text="ثبت نشده است"/>
+            </div>
+            <div class="col-md-6 col-xs-12">
+              <div class="text-subtitle2 q-mb-sm">اقلام مصرف شده (نصاب)</div>
+              <installation-items-table :items="details.used_items" empty-text="هنوز ثبت نشده است"/>
+            </div>
+
+            <div class="col-12" v-if="details.histories && details.histories.length">
+              <q-separator class="q-my-sm"/>
+              <div class="text-subtitle2 q-mb-sm">تاریخچه گردش کار</div>
+              <q-timeline color="accent" layout="dense">
+                <q-timeline-entry
+                    v-for="history in details.histories"
+                    :key="history.id"
+                    :color="stageColor(history.stage)"
+                    :title="history.stage_label"
+                    :subtitle="history.jalali_date + (history.user ? ' - ' + history.user.name : '')">
+                  <div v-if="history.description" style="white-space: pre-line">{{ history.description }}</div>
+                </q-timeline-entry>
+              </q-timeline>
+            </div>
+
           </div>
         </q-card-section>
 
@@ -200,32 +259,22 @@
     </q-dialog>
 
     <q-dialog v-model="consumablesDlg">
-      <q-card style="width: 500px; max-width: 95vw;">
+      <q-card style="width: 550px; max-width: 95vw;">
         <q-card-section>
-          <div class="text-h6">اقلام مصرفی سرویس نصب</div>
+          <div class="text-h6">اقلام سرویس نصب</div>
         </q-card-section>
 
         <q-separator/>
 
-        <q-card-section v-if="consumablesLoading" class="text-center q-pa-lg">
-          <q-spinner color="primary" size="2em"/>
-        </q-card-section>
-
-        <q-card-section v-else-if="!consumables.length" class="text-center text-grey q-pa-md">
-          اقلام مصرفی برای این سرویس نصب ثبت نشده است
-        </q-card-section>
-
-        <q-card-section v-else>
-          <q-list bordered separator dense>
-            <q-item v-for="item in consumables" :key="item.id">
-              <q-item-section>
-                <q-item-label>{{ item.product ? item.product.name : '-' }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-badge color="teal">{{ item.quantity }} عدد</q-badge>
-              </q-item-section>
-            </q-item>
-          </q-list>
+        <q-card-section v-if="consumablesRow" class="q-gutter-y-md">
+          <div>
+            <div class="text-subtitle2 q-mb-xs">اقلام پیش‌نیاز (تعیین شده توسط مدیر)</div>
+            <installation-items-table :items="consumablesRow.required_items" empty-text="ثبت نشده است"/>
+          </div>
+          <div>
+            <div class="text-subtitle2 q-mb-xs">اقلام مصرف شده (ثبت شده توسط نصاب)</div>
+            <installation-items-table :items="consumablesRow.used_items" empty-text="هنوز ثبت نشده است"/>
+          </div>
         </q-card-section>
 
         <q-separator/>
@@ -235,12 +284,23 @@
       </q-card>
     </q-dialog>
 
+    <installation-workflow-dialog
+        v-model="workflowDlg"
+        :service="workflowService"
+        :mode="workflowMode"
+        @saved="getData()"/>
+
   </q-page>
 </template>
 
 <script>
-import {exportFile} from 'quasar'
+import {exportFile, LocalStorage} from 'quasar'
 import {api} from 'boot/axios'
+import InstallationWorkflowDialog, {STAGE} from 'components/InstallationWorkflowDialog.vue'
+import InstallationItemsTable from 'components/InstallationItemsTable.vue'
+
+const ROLE_ADMIN = 0
+const ROLE_INSTALLER = 2
 
 function wrapCsvValue(val, formatFn) {
   let formatted = formatFn !== void 0
@@ -258,12 +318,34 @@ const APPOINTMENT_CANCELED = 3
 
 export default {
   name: "ListInstallationService",
+  components: {InstallationWorkflowDialog, InstallationItemsTable},
 
   data() {
     return {
+      STAGE,
+      userRole: Number(LocalStorage.getItem('role')),
+      userId: LocalStorage.getItem('id'),
+
       loading: true,
       filter: '',
       rows: [],
+
+      stageFilter: null,
+      onlyMyTurn: false,
+      stageFilterOptions: [
+        {label: 'همه مراحل', value: null},
+        {label: 'پیش‌نویس', value: STAGE.DRAFT},
+        {label: 'ارجاع به نصاب - در حال نصب', value: STAGE.ASSIGNED},
+        {label: 'تکمیل توسط نصاب - در انتظار ارجاع به کارشناس', value: STAGE.INSTALLER_SUBMITTED},
+        {label: 'در حال بررسی کارشناس فنی', value: STAGE.UNDER_REVIEW},
+        {label: 'برگشت به نصاب برای رفع عیوب', value: STAGE.NEEDS_FIX},
+        {label: 'تایید کارشناس - آماده تکمیل نهایی', value: STAGE.APPROVED},
+        {label: 'تکمیل نهایی', value: STAGE.COMPLETED}
+      ],
+
+      workflowDlg: false,
+      workflowService: null,
+      workflowMode: '',
 
       installerRoles: [
         {key: 'panel', label: 'نصاب پنل', shortLabel: 'پنل'},
@@ -274,7 +356,7 @@ export default {
       columns: [
         {name: 'customer_name', field: 'customer_name', align: 'center', label: 'مشتری'},
         {name: 'purchase_source', field: 'purchase_source', align: 'center', label: 'نوع خرید'},
-        {name: 'status', field: 'status', align: 'center', label: 'وضعیت'},
+        {name: 'stage', field: 'stage_label', align: 'center', label: 'مرحله'},
         {name: 'installers', field: 'installers', align: 'center', label: 'نصاب ها'},
         {name: 'action', field: 'action', align: 'center', label: 'عملیات'}
       ],
@@ -288,12 +370,80 @@ export default {
       details: null,
 
       consumablesDlg: false,
-      consumablesLoading: false,
-      consumables: []
+      consumablesRow: null
+    }
+  },
+
+  computed: {
+    isInstaller() {
+      return this.userRole === ROLE_INSTALLER
+    },
+    filteredRows() {
+      return this.rows.filter(row =>
+          (this.stageFilter === null || row.stage === this.stageFilter)
+          && (!this.onlyMyTurn || this.nextAction(row))
+      )
     }
   },
 
   methods: {
+
+    // اقدام بعدی گردش کار برای کاربر جاری (در صورت داشتن دسترسی)
+    nextAction(row) {
+      const isAdmin = this.userRole === ROLE_ADMIN
+
+      switch (row.stage) {
+        case STAGE.ASSIGNED:
+          if (!this.isInstaller || this.isAssignedInstaller(row))
+            return {mode: 'installer-submit', label: 'ثبت اقلام مصرفی', icon: 'inventory', color: 'blue'}
+          return null
+        case STAGE.NEEDS_FIX:
+          if (!this.isInstaller || this.isAssignedInstaller(row))
+            return {mode: 'installer-submit', label: 'ثبت رفع عیوب', icon: 'build', color: 'negative'}
+          return null
+        case STAGE.INSTALLER_SUBMITTED:
+          return this.isInstaller ? null
+              : {mode: 'send-to-review', label: 'ارسال برای کارشناس', icon: 'engineering', color: 'deep-purple'}
+        case STAGE.UNDER_REVIEW:
+          return isAdmin || row.technical_expert_id === this.userId
+              ? {mode: 'review', label: 'بررسی کارشناس', icon: 'fact_check', color: 'orange-8'}
+              : null
+        case STAGE.APPROVED:
+          return this.isInstaller ? null
+              : {mode: 'complete', label: 'تکمیل نهایی', icon: 'task_alt', color: 'positive'}
+        default:
+          return null
+      }
+    },
+
+    // installer_mode = 1: کل پروژه به یک نصاب ارجاع شده (در ردیف panel ذخیره می شود)
+    rolesOf(row) {
+      if (row && Number(row.installer_mode) === 1)
+        return [{key: 'panel', label: 'نصاب کل پروژه', shortLabel: 'نصاب پروژه'}]
+      return this.installerRoles
+    },
+
+    isAssignedInstaller(row) {
+      return (row.installer_appointments || []).some(a => a.user_id === this.userId && a.status !== APPOINTMENT_CANCELED)
+    },
+
+    openWorkflow(row, mode) {
+      this.workflowService = row
+      this.workflowMode = mode
+      this.workflowDlg = true
+    },
+
+    stageColor(stage) {
+      return {
+        [STAGE.DRAFT]: 'grey-6',
+        [STAGE.ASSIGNED]: 'blue',
+        [STAGE.INSTALLER_SUBMITTED]: 'deep-purple',
+        [STAGE.UNDER_REVIEW]: 'orange-8',
+        [STAGE.NEEDS_FIX]: 'negative',
+        [STAGE.APPROVED]: 'teal',
+        [STAGE.COMPLETED]: 'positive'
+      }[stage] || 'grey'
+    },
 
     getData() {
       this.loading = true
@@ -314,13 +464,6 @@ export default {
     },
     purchaseSourceColor(val) {
       return val === 1 ? 'teal' : 'blue-grey'
-    },
-
-    statusLabel(val) {
-      return val === 2 ? 'نهایی' : 'موقت'
-    },
-    statusColor(val) {
-      return val === 2 ? 'positive' : 'orange'
     },
 
     installerAppointment(row, roleKey) {
@@ -384,7 +527,7 @@ export default {
     },
 
     isUrgentInstallation(row) {
-      return this.installerRoles.some(role =>
+      return this.rolesOf(row).some(role =>
           this.isUrgentAppointment(this.installerAppointment(row, role.key))
       )
     },
@@ -407,22 +550,9 @@ export default {
           })
     },
 
-    showConsumables(id) {
+    showConsumables(row) {
+      this.consumablesRow = row
       this.consumablesDlg = true
-      this.consumablesLoading = true
-      this.consumables = []
-
-      api.get(`installation-service/${id}`)
-          .then(response => {
-            this.consumables = response.data.data.installation_service_items || []
-          })
-          .catch((error) => {
-            this.notifyError(error)
-            this.consumablesDlg = false
-          })
-          .finally(() => {
-            this.consumablesLoading = false
-          })
     },
 
     deleteConfirmation(id) {
