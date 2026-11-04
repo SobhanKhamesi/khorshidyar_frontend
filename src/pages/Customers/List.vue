@@ -254,12 +254,6 @@
                     {{ installStatusLabel(props.row.status) }}
                   </q-badge>
                 </q-td>
-                <q-td key="survey_date" :props="props">
-                  {{ props.row.jalali_survey_date || props.row.survey_date || '-' }}
-                </q-td>
-                <q-td key="technical_expert" :props="props">
-                  {{ props.row.technical_expert ? props.row.technical_expert.name : '-' }}
-                </q-td>
                 <q-td key="action" :props="props" class="q-gutter-x-sm">
                   <q-btn :href="'/v1/print_install_service/' + props.row.id" target="_blank" title="پرینت"
                          dense round color="positive" icon="print"/>
@@ -545,8 +539,6 @@ export default {
       installServicesColumns: [
         {name: 'purchase_source', field: 'purchase_source', align: 'center', label: 'نوع خرید'},
         {name: 'status', field: 'status', align: 'center', label: 'وضعیت'},
-        {name: 'survey_date', field: 'survey_date', align: 'center', label: 'تاریخ بازدید'},
-        {name: 'technical_expert', field: 'technical_expert', align: 'center', label: 'کارشناس فنی'},
         {name: 'action', field: 'action', align: 'center', label: 'عملیات'}
       ],
 

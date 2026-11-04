@@ -8,6 +8,8 @@
       <q-card-section class="q-pt-none">
         <q-select outlined clearable v-model="failure" :options="failureOptions" option-label="title" option-value="id"
                   label="دلیل شکست" :loading="loading"/>
+        <q-input outlined autogrow type="textarea" v-model="reason" class="q-mt-md"
+                 label="توضیحات (در سابقه کامنت‌ها ثبت می‌شود)"/>
       </q-card-section>
       <q-card-actions align="center" class="q-pb-md">
         <q-btn outline rounded color="accent" label="انصراف" v-close-popup/>
@@ -31,12 +33,13 @@ export default {
   },
   emits: ['update:modelValue', 'saved'],
   data() {
-    return {loading: false, saving: false, failure: null, failureOptions: []}
+    return {loading: false, saving: false, failure: null, reason: '', failureOptions: []}
   },
   watch: {
     modelValue(val) {
       if (!val) return
       this.failure = null
+      this.reason = ''
       if (!this.failureOptions.length) {
         this.loading = true
         api.get('failure/list')
@@ -56,7 +59,7 @@ export default {
         return
       }
       this.saving = true
-      api.post('automation/destroy', {id: this.automationId, failure: this.failure.id})
+      api.post('automation/destroy', {id: this.automationId, failure: this.failure.id, reason: this.reason})
         .then(() => {
           this.$q.notify({type: 'positive', position: 'center', message: 'فروش به ناموفق تبدیل شد'})
           this.$emit('saved', this.automationId)

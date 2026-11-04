@@ -136,8 +136,8 @@
     <survey-view-dialog v-model="surveyViewDlg" :automation-id="focusedAutomationId"/>
     <amendment-dialog v-model="amendDlg" :automation-id="amendAutomationId" @saved="getData()"/>
     <mark-failed-dialog v-model="markFailedDlg" :automation-id="markFailedAutomationId" @saved="getData()"/>
-    <pre-invoice-items-dialog v-model="preInvoiceItemsDlg" :automation-id="focusedAutomationId"/>
-    <contract-info-dialog v-model="contractInfoDlg" :automation-id="focusedAutomationId"/>
+    <pre-invoice-items-dialog v-model="preInvoiceItemsDlg" :automation-id="focusedAutomationId" @saved="getData()"/>
+    <contract-info-dialog v-model="contractInfoDlg" :automation-id="focusedAutomationId" @saved="getData()"/>
 
     <q-dialog v-model="showCommentsDlg">
       <q-card style="width: 800px; max-width: 90vw;">
@@ -325,13 +325,13 @@ export default {
     },
     surveyTypeLabel(type) {
       if (type === 1) return 'خانگی'
-      if (type === 2) return 'صنعتی'
+      if (type === 2) return 'صنعتی'
       if (type === 3) return 'ثبت شده از مشتری'
       return '-'
     },
     surveyTypeColor(type) {
       if (type === 1) return 'teal'
-      if (type === 2) return 'deep-orange'
+      if (type === 2) return 'deep-orange'
       if (type === 3) return 'purple'
       return 'grey'
     },

@@ -68,14 +68,6 @@
                 </q-badge>
               </q-td>
 
-              <q-td key="survey_date" :props="props">
-                {{ props.row.jalali_survey_date || props.row.survey_date || '-' }}
-              </q-td>
-
-              <q-td key="technical_expert" :props="props">
-                {{ props.row.technical_expert ? props.row.technical_expert.name : '-' }}
-              </q-td>
-
               <q-td key="installers" :props="props">
                 <div class="q-gutter-xs">
                   <q-badge
@@ -169,16 +161,6 @@
               <q-badge :color="statusColor(details.status)">
                 {{ statusLabel(details.status) }}
               </q-badge>
-            </div>
-
-            <div class="col-md-6 col-xs-12">
-              <div class="text-caption text-grey-7">تاریخ بازدید</div>
-              <div class="text-body1">{{ details.jalali_survey_date || details.survey_date || '-' }}</div>
-            </div>
-
-            <div class="col-md-6 col-xs-12">
-              <div class="text-caption text-grey-7">کارشناس فنی</div>
-              <div class="text-body1">{{ details.technical_expert ? details.technical_expert.name : '-' }}</div>
             </div>
 
             <div class="col-12" v-if="details.description">
@@ -293,8 +275,6 @@ export default {
         {name: 'customer_name', field: 'customer_name', align: 'center', label: 'مشتری'},
         {name: 'purchase_source', field: 'purchase_source', align: 'center', label: 'نوع خرید'},
         {name: 'status', field: 'status', align: 'center', label: 'وضعیت'},
-        {name: 'survey_date', field: 'survey_date', align: 'center', label: 'تاریخ بازدید', sortable: true},
-        {name: 'technical_expert', field: 'technical_expert', align: 'center', label: 'کارشناس فنی'},
         {name: 'installers', field: 'installers', align: 'center', label: 'نصاب ها'},
         {name: 'action', field: 'action', align: 'center', label: 'عملیات'}
       ],

@@ -461,7 +461,7 @@
 
     <survey-view-dialog v-model="surveyViewDlg" :automation-id="surveyViewAutomationId"/>
     <amendment-dialog v-model="amendDlg" :automation-id="amendAutomationId" @saved="getData()"/>
-    <pre-invoice-items-dialog v-model="viewItemsDlg" :automation-id="focusedAutomationId"/>
+    <pre-invoice-items-dialog v-model="viewItemsDlg" :automation-id="focusedAutomationId" @saved="getData()"/>
     <CustomerInfoDialog v-model="customerInfoDlg" :customer="customerInfoTarget"/>
 
   </q-page>
@@ -604,13 +604,13 @@ export default {
     },
     surveyTypeLabel(type) {
       if (type === 1) return 'خانگی'
-      if (type === 2) return 'صنعتی'
+      if (type === 2) return 'صنعتی'
       if (type === 3) return 'ثبت شده از مشتری'
       return '-'
     },
     surveyTypeColor(type) {
       if (type === 1) return 'teal'
-      if (type === 2) return 'deep-orange'
+      if (type === 2) return 'deep-orange'
       if (type === 3) return 'purple'
       return 'grey'
     },

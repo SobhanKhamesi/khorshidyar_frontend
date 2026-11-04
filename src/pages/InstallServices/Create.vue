@@ -74,39 +74,6 @@
                   />
                 </div>
 
-                <div class="col-md-6 col-xs-12">
-                  <q-input mask="####/##/##" outlined dir="ltr" v-model="surveyDate" label="تاریخ بازدید">
-                    <template v-slot:prepend>
-                      <q-icon name="event" class="cursor-pointer">
-                        <q-popup-proxy transition-show="scale" transition-hide="scale">
-                          <q-date today-btn
-                                  calendar="persian"
-                                  v-model="surveyDate" mask="YYYY-MM-DD">
-                            <q-btn v-close-popup color="accent" outline rounded label="بستن"/>
-                          </q-date>
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-
-                <div class="col-md-6 col-xs-12">
-                  <q-select
-                      option-label="name"
-                      option-value="id"
-                      outlined
-                      v-model="technicalExpertId"
-                      label="کارشناس فنی"
-                      clearable
-                      :options="technicalExpertOptions">
-                    <template v-slot:no-option>
-                      <q-item>
-                        <q-item-section class="text-grey">یافت نشد</q-item-section>
-                      </q-item>
-                    </template>
-                  </q-select>
-                </div>
-
               </div>
             </q-card-section>
           </q-card>
@@ -454,9 +421,6 @@ export default {
       address: '',
       contactNumber: '',
       productDescription: '',
-      surveyDate: '',
-      technicalExpertId: null,
-      technicalExpertOptions: [],
 
       customerAutomations: [],
       automationsLoading: false,
@@ -587,15 +551,11 @@ export default {
       if (this.purchaseSource !== '1') return
 
       this.selectedAutomationId = automation.id
-      this.surveyDate = automation.jalali_visit_date || ''
-      this.technicalExpertId = automation.expert || null
       this.productDescription = automation.description || ''
     },
 
     onPurchaseSourceChange() {
       this.selectedAutomationId = null
-      this.surveyDate = ''
-      this.technicalExpertId = null
       this.productDescription = ''
     },
 
@@ -604,13 +564,6 @@ export default {
       if (type === 2) return 'کارشناسی صنعتی'
       if (type === 3) return 'ثبت شده از مشتری'
       return 'نامشخص'
-    },
-
-    getTechnicalExperts() {
-      api.get('technical_experts')
-          .then(response => {
-            this.technicalExpertOptions = response.data.data
-          })
     },
 
     getInstallers() {
@@ -711,8 +664,6 @@ export default {
       this.address = ''
       this.contactNumber = ''
       this.productDescription = ''
-      this.surveyDate = ''
-      this.technicalExpertId = null
       this.selectedAutomationId = null
       this.installers = {
         panel: {installer: null, date: '', startTime: '', endTime: ''},
@@ -741,14 +692,6 @@ export default {
           })
           return false
         }
-      }
-      if (!this.surveyDate) {
-        this.$q.notify({type: 'negative', position: 'bottom', message: 'تاریخ بازدید را وارد کنید'})
-        return false
-      }
-      if (!this.technicalExpertId) {
-        this.$q.notify({type: 'negative', position: 'bottom', message: 'کارشناس فنی را انتخاب کنید'})
-        return false
       }
       return true
     },
@@ -802,8 +745,6 @@ export default {
         address: this.address,
         contact_number: this.contactNumber,
         description: this.productDescription,
-        survey_date: this.surveyDate,
-        technical_expert: this.technicalExpertId,
         installers: {
           panel: {
             installer_id: this.installers.panel.installer ? this.installers.panel.installer.id : null,
@@ -857,7 +798,6 @@ export default {
   created() {
     this.getCustomersAndLeads();
     this.getInstallers();
-    this.getTechnicalExperts();
     this.getProducts();
   }
 }
