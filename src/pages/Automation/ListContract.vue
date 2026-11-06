@@ -120,7 +120,8 @@
                        color="positive" icon="print"/>
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                        :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
-                <q-btn title="اصلاحیه فاکتور و روش پرداخت" dense round color="deep-purple" icon="receipt_long"
+                <q-btn v-if="(props.row.payments_count || 0) + (props.row.cheques_count || 0) > 0"
+                       title="اصلاحیه فاکتور و روش پرداخت" dense round color="deep-purple" icon="receipt_long"
                        @click.prevent="openAmendment(props.row.id)"/>
                 <q-btn :title="'قرارداد: ' + contractLabel(props.row)" dense round :color="contractColor(props.row)" icon="history_edu"
                        :to="{ name: 'AutomationContract', params: {id: props.row.id} }">
