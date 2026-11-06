@@ -559,6 +559,12 @@ export default {
 
       this.selectedAutomationId = automation.id
       this.productDescription = automation.description || ''
+      // کالاهای فاکتور فروش (نه خدمات) به‌عنوان اقلام پیش‌نیاز پیشنهاد می‌شوند؛ قابل ویرایش است.
+      // خدمات هزینه‌دار فاکتور (مثل حمل و نقل) در سمت سرور به هزینه‌های جانبی پروژه منتقل می‌شوند.
+      if (!this.requiredItems.some(i => i.product)) {
+        const goods = (automation.orders || []).filter(o => o.product && o.product.kind !== 2)
+        if (goods.length) this.requiredItems = goods.map(o => ({product: o.product, quantity: Number(o.count)}))
+      }
     },
 
     onPurchaseSourceChange() {

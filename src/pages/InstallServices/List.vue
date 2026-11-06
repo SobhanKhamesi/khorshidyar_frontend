@@ -97,6 +97,19 @@
                 </div>
               </q-td>
 
+              <!-- سود نهایی پروژه (فقط مدیر)؛ تا تکمیل نهایی موقت است -->
+              <q-td v-if="isAdmin" key="final_profit" :props="props">
+                <q-btn flat dense no-caps
+                       :text-color="(props.row.final_profit || 0) < 0 ? 'negative' : 'positive'"
+                       :label="moneyFormat(props.row.final_profit)"
+                       @click.prevent="openFinance(props.row)">
+                  <q-tooltip>مشاهده‌ی صورت سود و زیان پروژه</q-tooltip>
+                </q-btn>
+                <div class="text-caption text-grey-7">
+                  {{ props.row.stage === STAGE.COMPLETED ? 'نهایی' : 'موقت' }}
+                </div>
+              </q-td>
+
               <q-td key="action" :props="props" class="q-gutter-x-sm">
                 <!-- اقدام بعدی گردش کار -->
                 <q-btn
@@ -115,6 +128,9 @@
                     @click.prevent="showConsumables(props.row)"
                     title="اقلام پیش‌نیاز و مصرفی" dense round color="teal" icon="inventory_2"/>
 
+                <q-btn v-if="isAdmin" @click.prevent="openFinance(props.row)"
+                       title="سود و زیان پروژه (اقلام، دستمزد، هزینه‌های جانبی)" dense round color="deep-purple" icon="calculate"/>
+
                 <q-btn :href="'/v1/print_install_service/' + props.row.id" target="_blank" title="پرینت" dense round
                        color="positive" icon="print"/>
 
@@ -131,6 +147,8 @@
         </q-table>
       </q-card-section>
     </q-card>
+
+    <project-finance-dialog v-model="financeDlg" :service-id="financeServiceId" @changed="onFinanceChanged"/>
 
     <q-dialog v-model="deleteConfirmDialog">
       <q-card>
@@ -298,6 +316,7 @@ import {exportFile, LocalStorage} from 'quasar'
 import {api} from 'boot/axios'
 import InstallationWorkflowDialog, {STAGE} from 'components/InstallationWorkflowDialog.vue'
 import InstallationItemsTable from 'components/InstallationItemsTable.vue'
+import ProjectFinanceDialog from 'components/ProjectFinanceDialog.vue'
 
 const ROLE_ADMIN = 0
 const ROLE_INSTALLER = 2
@@ -318,7 +337,7 @@ const APPOINTMENT_CANCELED = 3
 
 export default {
   name: "ListInstallationService",
-  components: {InstallationWorkflowDialog, InstallationItemsTable},
+  components: {InstallationWorkflowDialog, InstallationItemsTable, ProjectFinanceDialog},
 
   data() {
     return {
@@ -358,6 +377,7 @@ export default {
         {name: 'purchase_source', field: 'purchase_source', align: 'center', label: 'نوع خرید'},
         {name: 'stage', field: 'stage_label', align: 'center', label: 'مرحله'},
         {name: 'installers', field: 'installers', align: 'center', label: 'نصاب ها'},
+        {name: 'final_profit', field: 'final_profit', align: 'center', label: 'سود نهایی (تومان)', sortable: true},
         {name: 'action', field: 'action', align: 'center', label: 'عملیات'}
       ],
 
@@ -370,13 +390,19 @@ export default {
       details: null,
 
       consumablesDlg: false,
-      consumablesRow: null
+      consumablesRow: null,
+
+      financeDlg: false,
+      financeServiceId: ''
     }
   },
 
   computed: {
     isInstaller() {
       return this.userRole === ROLE_INSTALLER
+    },
+    isAdmin() {
+      return this.userRole === ROLE_ADMIN
     },
     filteredRows() {
       return this.rows.filter(row =>
@@ -387,6 +413,19 @@ export default {
   },
 
   methods: {
+    moneyFormat(value) {
+      if (value === null || value === undefined) return '-'
+      const n = Math.round(Number(value) || 0)
+      return (n < 0 ? '-' : '') + String(Math.abs(n)).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, '$1,')
+    },
+    openFinance(row) {
+      this.financeServiceId = row.id
+      this.financeDlg = true
+    },
+    onFinanceChanged({id, final_profit}) {
+      const row = this.rows.find(r => r.id === id)
+      if (row) row.final_profit = final_profit
+    },
 
     // اقدام بعدی گردش کار برای کاربر جاری (در صورت داشتن دسترسی)
     nextAction(row) {
@@ -613,6 +652,8 @@ export default {
   },
 
   created() {
+    // ستون سود نهایی فقط برای مدیر
+    if (!this.isAdmin) this.columns = this.columns.filter(c => c.name !== 'final_profit')
     this.getData()
   }
 }

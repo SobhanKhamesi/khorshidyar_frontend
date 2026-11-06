@@ -169,7 +169,10 @@
                 <q-list separator>
                   <q-item v-for="item in month.items" :key="item.id" class="q-py-sm">
                     <q-item-section>
-                      <q-item-label class="text-weight-medium">{{ item.project_title }}</q-item-label>
+                      <q-item-label class="text-weight-medium">
+                        {{ item.project_title }}
+                        <q-badge v-if="item.work_label" outline color="primary" class="q-ml-xs" :label="item.work_label"/>
+                      </q-item-label>
                       <q-item-label caption>
                         تاریخ: {{ item.jalali_date }}
                         <span v-if="item.is_settled && item.jalali_settled_at"> - تسویه: {{ item.jalali_settled_at }}</span>

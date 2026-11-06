@@ -15,11 +15,42 @@
 
               <q-input outlined v-model="name" label="نام"/>
 
+              <!-- نوع: کالا (موجودی انبار دارد) یا خدمت (مثل حمل و نقل، نصب)؛ برای گزارش‌ها و سود و زیان پروژه -->
+              <div class="row items-center q-gutter-x-md">
+                <div class="text-grey-8">نوع:</div>
+                <q-option-group inline v-model="kind" :options="kindOptions" color="primary"/>
+              </div>
 
+              <div v-if="kind === 2" class="row items-center q-gutter-x-md">
+                <div class="text-grey-8">ماهیت خدمت:</div>
+                <q-option-group inline v-model="serviceNature" :options="natureOptions" color="primary"/>
+                <div class="text-caption text-grey-7 full-width">
+                  هزینه: برای ما هزینه دارد و از سود پروژه کم می‌شود (مثل حمل و نقل) — دریافتی: از مشتری دریافت می‌شود و به درآمد پروژه اضافه می‌شود
+                </div>
+              </div>
+
+              <!-- خدمت قیمت خرید/فروش ندارد؛ فقط یک مبلغ (هزینه یا دریافتی) که در هر فاکتور/پروژه قابل تغییر است -->
               <q-field
+                v-if="kind === 2"
                 dir="ltr"
                 suffix="تومان"
-                label="قیمت همکاری"
+                :label="serviceNature === 2 ? 'مبلغ دریافتی (پیش‌فرض)' : 'مبلغ هزینه (پیش‌فرض)'"
+                input-class="text-right"
+                outlined
+                v-model="serviceAmount">
+                <template v-slot:control="{ id, floatingLabel, modelValue, emitValue }">
+                  <input :id="id" class="q-field__input text-right" :value="modelValue"
+                         @change="e => emitValue(e.target.value)" v-money="moneyFormatForDirective"
+                         v-show="floatingLabel">
+                </template>
+              </q-field>
+
+
+              <q-field
+                v-if="kind !== 2"
+                dir="ltr"
+                suffix="تومان"
+                label="قیمت خرید (همکاری)"
                 input-class="text-right"
                 outlined
                 v-model="purchasePrice">
@@ -36,6 +67,7 @@
             <div class="col-md-6 col-xs-12 q-gutter-y-md">
 
               <q-input
+                v-if="kind !== 2"
                 min="0"
                 suffix="عدد"
                 dir="ltr"
@@ -62,6 +94,7 @@
               </q-select>
 
               <q-field
+                v-if="kind !== 2"
                 dir="ltr"
                 suffix="تومان"
                 label="قیمت فروش"
@@ -122,6 +155,11 @@ export default {
       name: '',
       purchasePrice: 0,
       firstInventory: 0,
+      kind: 1,
+      serviceNature: null,
+      serviceAmount: 0,
+      kindOptions: [{label: 'کالا', value: 1}, {label: 'خدمت', value: 2}],
+      natureOptions: [{label: 'هزینه', value: 1}, {label: 'دریافتی', value: 2}],
       sellingPrice: 0,
       description: '',
       unitId: null,
@@ -142,6 +180,9 @@ export default {
           this.name = response.data.data.name
           this.purchasePrice = response.data.data.purchase_price
           this.firstInventory = response.data.data.first_inventory
+          this.kind = response.data.data.kind || 1
+          this.serviceNature = response.data.data.service_nature
+          this.serviceAmount = response.data.data.service_amount || 0
           this.sellingPrice = response.data.data.selling_price
           this.description = response.data.data.description
           this.unitId = response.data.data.unit_id
@@ -164,7 +205,10 @@ export default {
       payload.id = this.$route.params.id
       payload.name = this.name
       payload.purchasePrice = this.purchasePrice
-      payload.firstInventory = this.firstInventory
+      payload.firstInventory = this.kind === 2 ? null : this.firstInventory
+      payload.kind = this.kind
+      payload.serviceNature = this.kind === 2 ? this.serviceNature : null
+      payload.serviceAmount = this.kind === 2 ? this.serviceAmount : null
       payload.sellingPrice = this.sellingPrice
       payload.description = this.description
       payload.unitId = this.unitId

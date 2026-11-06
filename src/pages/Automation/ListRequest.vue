@@ -207,7 +207,7 @@
               :key="item.uid"
               class="row q-col-gutter-sm items-center"
             >
-              <div class="col-md-4 col-xs-12">
+              <div class="col-md-3 col-xs-12">
                 <q-select
                   dense outlined
                   option-label="name"
@@ -244,7 +244,20 @@
                 </q-input>
               </div>
 
-              <div class="col-md-3 col-xs-6">
+              <div v-if="isService(item.product)" class="col-md-5 col-xs-12">
+                <q-input v-if="isCostService(item.product)" dense outlined type="number" dir="ltr" min="0" suffix="تومان"
+                         v-model.number="item.purchasePrice" label="مبلغ هزینه (برای ما)"/>
+                <q-input v-else dense outlined type="number" dir="ltr" min="0" suffix="تومان"
+                         v-model.number="item.price" label="مبلغ دریافتی"/>
+              </div>
+
+              <!-- قیمت خرید همین قلم در این فاکتور (پیش‌فرض: قیمت خرید محصول)؛ مبنای سود ناخالص -->
+              <div v-if="!isService(item.product)" class="col-md-2 col-xs-6">
+                <q-input dense outlined type="number" dir="ltr" min="0" suffix="تومان"
+                         v-model.number="item.purchasePrice" label="قیمت خرید"/>
+              </div>
+
+              <div v-if="!isService(item.product)" class="col-md-3 col-xs-6">
                 <q-input
                   dense outlined type="number" dir="ltr" min="0" suffix="تومان"
                   v-model.number="item.price"
@@ -295,7 +308,7 @@
                 </q-input>
               </div>
 
-              <div class="col-md-2 col-xs-6 text-caption text-grey">
+              <div class="col-md-1 col-xs-6 text-caption text-grey">
                 {{ moneyFormat((item.count || 0) * (item.price || 0)) }} تومان
               </div>
 
@@ -579,7 +592,8 @@ function emptyInvoiceItem() {
     uid: Math.random().toString(36).slice(2),
     product: null,
     count: 1,
-    price: null
+    price: null,
+    purchasePrice: null
   }
 }
 
@@ -855,10 +869,31 @@ export default {
       })
     },
 
+    // خدمت فقط یک مبلغ دارد: خدمت هزینه ← مبلغ هزینه (قیمت خرید)، خدمت دریافتی ← مبلغ دریافتی (قیمت فروش)
+    isService(p) {
+      return !!p && p.kind === 2
+    },
+    isCostService(p) {
+      return this.isService(p) && p.service_nature === 1
+    },
     // در صورتی که محصول قیمت پیش‌فرض داشته باشد (قیمت فروش)، خودکار در فیلد مبلغ قرار می‌گیرد
     onProductSelected(item) {
+      if (this.isService(item.product)) {
+        const amount = Number(item.product.service_amount) || 0
+        if (this.isCostService(item.product)) {
+          item.price = 0
+          if (!item.purchasePrice) item.purchasePrice = amount
+        } else {
+          item.purchasePrice = 0
+          if (!item.price) item.price = amount
+        }
+        return
+      }
       if (item.product && item.product.selling_price && !item.price) {
         item.price = item.product.selling_price
+      }
+      if (item.product && (item.purchasePrice === null || item.purchasePrice === '')) {
+        item.purchasePrice = Number(item.product.purchase_price) || 0
       }
     },
 
@@ -963,6 +998,7 @@ export default {
       const orders = this.invoiceItems.map(item => ({
         orderProductId: item.product.id,
         orderPrice: item.price,
+        orderPurchasePrice: item.purchasePrice,
         orderCount: item.count,
       }))
 

@@ -58,6 +58,14 @@
             </div>
           </template>
         </q-tab>
+        <q-tab v-if="isAdmin" name="wages">
+          <template v-slot:default>
+            <div style="display: flex;align-items: center;justify-content: center" class="q-gutter-x-sm">
+              <q-icon size="sm" name="payments"/>
+              <span>دستمزد پیش‌فرض</span>
+            </div>
+          </template>
+        </q-tab>
       </q-tabs>
       <q-separator inset/>
       <q-tab-panels v-model="tab" animated>
@@ -663,19 +671,29 @@
 
         </q-tab-panel>
 
+        <q-tab-panel v-if="isAdmin" name="wages">
+          <wage-settings-panel/>
+        </q-tab-panel>
       </q-tab-panels>
     </q-card>
   </q-page>
 </template>
 
 <script>
-import {exportFile, QSpinnerPuff} from "quasar";
+import {exportFile, LocalStorage, QSpinnerPuff} from "quasar";
+import WageSettingsPanel from 'components/WageSettingsPanel.vue'
 import {api} from 'boot/axios'
 import {VMoney} from "v-money";
 
 export default {
   name: "Settings",
   directives: {money: VMoney},
+  components: {WageSettingsPanel},
+  computed: {
+    isAdmin() {
+      return Number(LocalStorage.getItem('role')) === 0
+    }
+  },
   data() {
     return {
       filter: '',

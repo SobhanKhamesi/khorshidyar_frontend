@@ -85,6 +85,24 @@
               <q-td key="final_price" :props="props">
                 {{ moneyFormat(props.row.final_price) }}
               </q-td>
+              <!-- سود ناخالص اولیه: در لحظه‌ی فروش موفق ثبت شده و ثابت است (فقط مدیر) -->
+              <q-td v-if="isAdmin" key="gross_profit" :props="props">
+                <template v-if="props.row.gross_profit !== null && props.row.gross_profit !== undefined">
+                  <q-btn flat dense no-caps :text-color="props.row.gross_profit < 0 ? 'negative' : 'positive'"
+                         :label="moneyFormat(props.row.gross_profit)" @click="showPreInvoiceItems(props.row.id)">
+                    <q-tooltip>
+                      فروش {{ moneyFormat(props.row.gross_sale_amount) }} − خرید {{ moneyFormat(props.row.gross_purchase_cost) }}
+                      (برای مشاهده‌ی ریز اقلام کلیک کنید)
+                    </q-tooltip>
+                  </q-btn>
+                  <div v-if="props.row.installation_service && props.row.installation_service.final_profit !== null
+                             && props.row.installation_service.final_profit !== undefined"
+                       class="text-caption text-grey-8">
+                    سود نهایی: {{ moneyFormat(props.row.installation_service.final_profit) }}
+                  </div>
+                </template>
+                <span v-else>-</span>
+              </q-td>
               <q-td key="date" :props="props">
                 {{ props.row.jalali_date }}
               </q-td>
@@ -312,6 +330,7 @@ export default {
         {name: 'referrer_percent', field: 'referrer_percent', align: 'center', label: 'درصد معرف'},
         {name: 'survey_type', field: 'survey_type', align: 'center', label: 'نوع کارشناسی'},
         {name: 'final_price', field: 'final_price', align: 'center', label: 'مبلغ (تومان)'},
+        {name: 'gross_profit', field: 'gross_profit', align: 'center', label: 'سود ناخالص (تومان)', sortable: true},
         {name: 'date', field: 'date', align: 'center', label: 'تاریخ', sortable: true},
         {name: 'installation', field: row => row.installation_service ? row.installation_service.stage_label : 'ارجاع نشده', align: 'center', label: 'سرویس نصب'},
         {name: 'action', field: 'action', align: 'center', label: 'عملیات'}
@@ -485,7 +504,14 @@ export default {
           })
     },
   },
+  computed: {
+    isAdmin() {
+      return this.userRole === 0
+    }
+  },
   created() {
+    // ستون سود ناخالص فقط برای مدیر
+    if (!this.isAdmin) this.columns = this.columns.filter(c => c.name !== 'gross_profit')
     this.getData()
   }
 

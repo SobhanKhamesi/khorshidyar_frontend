@@ -56,14 +56,20 @@
               <q-td key="name" :props="props">
                 {{ props.row.name }}
               </q-td>
+              <q-td key="kind" :props="props">
+                <q-badge :color="props.row.kind === 2 ? 'teal' : 'blue-grey'" :label="props.row.kind_label || 'کالا'"/>
+                <q-badge v-if="props.row.service_nature_label" class="q-ml-xs" outline
+                         :color="props.row.service_nature === 1 ? 'negative' : 'positive'"
+                         :label="props.row.service_nature_label"/>
+              </q-td>
               <q-td key="purchase_price" :props="props">
-                {{ moneyFormat(props.row.purchase_price) }}
+                {{ props.row.purchase_price === null ? '-' : moneyFormat(props.row.purchase_price) }}
               </q-td>
               <q-td key="selling_price" :props="props">
-                {{ moneyFormat(props.row.selling_price) }}
+                {{ props.row.selling_price === null ? '-' : moneyFormat(props.row.selling_price) }}
               </q-td>
               <q-td key="inventory" :props="props">
-                {{ moneyFormat(props.row.inventory) }}
+                {{ props.row.kind === 2 ? '-' : moneyFormat(props.row.inventory) }}
               </q-td>
               <q-td key="sold_count" :props="props">
                 {{ moneyFormat(props.row.sold_count) }}
@@ -132,7 +138,8 @@ export default {
       loading: true,
       columns: [
         {name: 'name', field: 'name', align: 'center', label: 'نام'},
-        {name: 'purchase_price', field: 'purchase_price', align: 'center', label: 'قیمت همکاری(تومان)'},
+        {name: 'kind', field: row => [row.kind_label, row.service_nature_label].filter(Boolean).join(' - '), align: 'center', label: 'نوع'},
+        {name: 'purchase_price', field: 'purchase_price', align: 'center', label: 'قیمت خرید/همکاری(تومان)'},
         {name: 'selling_price', field: 'selling_price', align: 'center', label: 'قیمت فروش(تومان)'},
         {
           name: 'inventory',

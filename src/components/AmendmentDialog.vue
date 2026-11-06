@@ -22,16 +22,26 @@
         <div>
           <div class="text-subtitle2 q-mb-sm">اقلام فاکتور</div>
           <div v-for="(item, index) in items" :key="item.uid" class="row q-col-gutter-sm items-center q-mb-xs">
-            <div class="col-md-5 col-xs-12">
-              <q-select dense outlined v-model="item.product" :options="productOptions" option-label="name"
+            <div class="col-md-4 col-xs-12">
+              <q-select dense outlined v-model="item.product" :options="productOptions"
+                        :option-label="p => p ? p.name + (p.kind === 2 ? ' (خدمت)' : '') : ''"
                         use-input @filter="filterProducts" label="کالا/خدمت"
-                        @update:model-value="p => { if (p && !item.price) item.price = Number(p.selling_price) || 0 }"/>
+                        @update:model-value="p => onProductSelected(item, p)"/>
             </div>
             <div class="col-md-2 col-xs-4">
               <q-input dense outlined type="number" dir="ltr" v-model.number="item.count" label="تعداد"/>
             </div>
-            <div class="col-md-4 col-xs-6">
-              <q-input dense outlined type="number" dir="ltr" suffix="تومان" v-model.number="item.price" label="فی"/>
+            <div v-if="isService(item.product)" class="col-md-5 col-xs-8">
+              <q-input v-if="isCostService(item.product)" dense outlined type="number" dir="ltr" min="0" suffix="تومان"
+                       v-model.number="item.purchasePrice" label="مبلغ هزینه (برای ما)"/>
+              <q-input v-else dense outlined type="number" dir="ltr" min="0" suffix="تومان"
+                       v-model.number="item.price" label="مبلغ دریافتی"/>
+            </div>
+            <div v-if="!isService(item.product)" class="col-md-3 col-xs-4">
+              <q-input dense outlined type="number" dir="ltr" suffix="تومان" v-model.number="item.purchasePrice" label="قیمت خرید"/>
+            </div>
+            <div v-if="!isService(item.product)" class="col-md-2 col-xs-4">
+              <q-input dense outlined type="number" dir="ltr" suffix="تومان" v-model.number="item.price" label="فی فروش"/>
             </div>
             <div class="col-md-1 col-xs-2 text-left">
               <q-btn dense round flat color="negative" icon="delete" @click="items.splice(index, 1)"/>
@@ -164,7 +174,7 @@ export default {
   },
   methods: {
     emptyItem() {
-      return {uid: ++uid, product: null, count: 1, price: 0}
+      return {uid: ++uid, product: null, count: 1, price: 0, purchasePrice: 0}
     },
     emptyPayment() {
       return {uid: ++uid, method: null, amount: null, date: ''}
@@ -180,6 +190,30 @@ export default {
         const needle = (val || '').toLowerCase()
         this.productOptions = this.products.filter(p => (p.name || '').toLowerCase().includes(needle))
       })
+    },
+    // قیمت خرید و فروش پیش‌فرض از محصول؛ برای همین فاکتور قابل تغییر است
+    // خدمت فقط یک مبلغ دارد: خدمت هزینه ← مبلغ هزینه (قیمت خرید)، خدمت دریافتی ← مبلغ دریافتی (قیمت فروش)
+    isService(p) {
+      return !!p && p.kind === 2
+    },
+    isCostService(p) {
+      return this.isService(p) && p.service_nature === 1
+    },
+    onProductSelected(item, p) {
+      if (!p) return
+      if (this.isService(p)) {
+        const amount = Number(p.service_amount) || 0
+        if (this.isCostService(p)) {
+          item.price = 0
+          if (!item.purchasePrice) item.purchasePrice = amount
+        } else {
+          item.purchasePrice = 0
+          if (!item.price) item.price = amount
+        }
+        return
+      }
+      if (!item.price) item.price = Number(p.selling_price) || 0
+      if (!item.purchasePrice) item.purchasePrice = Number(p.purchase_price) || 0
     },
     loadProducts() {
       if (cachedProducts) return Promise.resolve(cachedProducts)
@@ -198,6 +232,7 @@ export default {
             product: products.find(p => p.id === o.product_id) || o.product,
             count: Number(o.count),
             price: Number(o.price),
+            purchasePrice: o.purchase_price === null || o.purchase_price === undefined ? null : Number(o.purchase_price),
           }))
           this.finalPrice = a.final_price !== null ? Number(a.final_price) : null
           this.payments = (a.payments || []).map(p => ({uid: ++uid, method: p.method, amount: Number(p.amount), date: p.jalali_date || ''}))
@@ -224,7 +259,9 @@ export default {
       this.saving = true
       api.post('automation/amend', {
         id: this.automationId,
-        orders: this.items.map(i => ({orderProductId: i.product.id, orderCount: i.count, orderPrice: i.price})),
+        orders: this.items.map(i => ({
+          orderProductId: i.product.id, orderCount: i.count, orderPrice: i.price, orderPurchasePrice: i.purchasePrice,
+        })),
         final_price: this.finalPrice,
         payments: this.payments.filter(p => p.amount).map(p => ({method: p.method, amount: p.amount, date: p.date || null})),
         cheques: this.cheques.filter(c => c.amount).map(c => ({number: c.number, bank_name: c.bank_name, amount: c.amount, due_date: c.due_date || null})),

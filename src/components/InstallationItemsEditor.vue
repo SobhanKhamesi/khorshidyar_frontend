@@ -110,10 +110,11 @@ export default {
   },
 
   created() {
+    // اقلام نصب فقط کالا هستند؛ خدمات (مثل حمل و نقل) در سود و زیان پروژه به‌عنوان هزینه/دریافتی جانبی ثبت می‌شوند
     api.get('products/list')
         .then(response => {
-          this.products = response.data.data
-          this.productOptions = response.data.data
+          this.products = (response.data.data || []).filter(p => p.kind !== 2)
+          this.productOptions = this.products
         })
   }
 }
