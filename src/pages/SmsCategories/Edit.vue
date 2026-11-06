@@ -26,6 +26,17 @@
                 outlined
                 autogrow
               />
+              <q-banner v-if="supportsLink" dense rounded class="bg-blue-1 text-blue-10 q-mt-sm">
+                <template v-slot:avatar>
+                  <q-icon name="link" color="primary"/>
+                </template>
+                عبارت <b dir="ltr">{link}</b> در هنگام ارسال با لینک {{ linkLabel }} جایگزین می‌شود؛
+                آن را هر جای متن که می‌خواهید قرار دهید. اگر در متن نباشد، لینک به انتهای پیامک اضافه می‌شود.
+                <template v-slot:action>
+                  <q-btn v-if="!(descriptionSms || '').includes('{link}')" flat dense color="primary"
+                         label="افزودن {link} به انتهای متن" @click="appendLink()"/>
+                </template>
+              </q-banner>
 
             </div>
           </div>
@@ -45,6 +56,12 @@
 import {QSpinnerPuff} from "quasar";
 import {api} from 'boot/axios'
 
+// قالب‌هایی که لینک دارند (هم‌نام با عنوان‌های بک‌اند) و جای لینک با {link} تعیین می‌شود
+const LINK_TEMPLATES = {
+  'فرم اولیه': 'صفحه فرم اولیه',
+  'نظرسنجی': 'صفحه نظرسنجی',
+}
+
 export default {
   name: "SmsEdit",
   data() {
@@ -53,7 +70,19 @@ export default {
       descriptionSms: '',
     }
   },
+  computed: {
+    supportsLink() {
+      return Object.prototype.hasOwnProperty.call(LINK_TEMPLATES, this.titleSms)
+    },
+    linkLabel() {
+      return LINK_TEMPLATES[this.titleSms] || ''
+    }
+  },
   methods: {
+    appendLink() {
+      const text = (this.descriptionSms || '').trimEnd()
+      this.descriptionSms = text ? text + '\n\n{link}' : '{link}'
+    },
     editFormSms () {
 
       this.$q.loading.show({

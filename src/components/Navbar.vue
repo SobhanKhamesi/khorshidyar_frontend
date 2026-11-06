@@ -239,6 +239,10 @@
         <q-item-section>
           <span>خدمات پس از فروش</span>
         </q-item-section>
+        <q-item-section side v-if="poor_rating_count > 0">
+          <q-icon name="sentiment_very_dissatisfied" color="negative" size="20px"
+                  :title="poor_rating_count + ' نظرسنجی ضعیف نیازمند بررسی'"/>
+        </q-item-section>
         <q-item-section side v-if="check_after_sale_count">
           <span class="blink-me">{{ after_sale_count }}</span>
         </q-item-section>
@@ -248,6 +252,10 @@
       </q-item>
       <q-item v-ripple clickable :to="{ name: 'AfterSalesServiceList' }">
         <q-item-section>لیست خدمات</q-item-section>
+        <q-item-section side v-if="poor_rating_count > 0">
+          <q-icon name="sentiment_very_dissatisfied" color="negative" size="20px"
+                  :title="poor_rating_count + ' نظرسنجی ضعیف نیازمند بررسی'"/>
+        </q-item-section>
         <q-item-section side v-if="check_after_sale_count">
           <span class="blink-me">{{ after_sale_count }}</span>
         </q-item-section>
@@ -417,6 +425,8 @@ export default defineComponent({
       intake_form_count: 0,
       // قراردادهایی که مشتری امضا کرده و هنوز در کارتابل دیده نشده‌اند
       contract_signed_count: 0,
+      // نظرسنجی‌های ضعیف خدمات پس از فروش که هنوز بررسی نشده‌اند
+      poor_rating_count: 0,
       check_sum_count: false,
     }
   },
@@ -456,6 +466,13 @@ export default defineComponent({
             if (signedCount > this.contract_signed_count)
               this.notifyAlarm(signedCount + ' قرارداد توسط مشتری امضا شده است (کارتابل مذاکره و قرارداد)', 'ListContract')
             this.contract_signed_count = signedCount
+
+            // نظرسنجی‌های ضعیف (امتیاز ۰ تا ۲) که دلیل نارضایتی‌شان هنوز بررسی نشده
+            const poorCount = response.data.data.poor_rating_count || 0
+            if (poorCount > this.poor_rating_count)
+              this.notifyAlarm(poorCount + ' نظرسنجی خدمات پس از فروش با رضایت «ضعیف» ثبت شده؛ دلیل نارضایتی را بررسی کنید',
+                  {name: 'AfterSalesServiceList', query: {poor: '1'}})
+            this.poor_rating_count = poorCount
             this.check_installation_service_count = this.installation_service_count > 0;
 
             setTimeout(() => {
@@ -474,7 +491,10 @@ export default defineComponent({
         timeout: 0,
         message,
         actions: [
-          {label: 'مشاهده', color: 'yellow', handler: () => this.$router.push({name: routeName})},
+          {
+            label: 'مشاهده', color: 'yellow',
+            handler: () => this.$router.push(typeof routeName === 'string' ? {name: routeName} : routeName)
+          },
           {label: 'بستن', color: 'white'}
         ]
       })

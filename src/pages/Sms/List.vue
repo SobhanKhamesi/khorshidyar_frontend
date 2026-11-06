@@ -71,8 +71,11 @@
               <q-td
                   v-for="col in props.cols"
                   :key="col.name"
-                  :props="props">
-                {{ col.value }}
+                  :props="props"
+                  :class="col.name === 'body' ? 'sms-body-cell' : ''">
+                <div class="text-center">
+                  {{ col.value }}
+                </div>
               </q-td>
             </q-tr>
             <q-tr v-show="props.expand" :props="props">
@@ -166,5 +169,13 @@ export default {
 </script>
 
 <style scoped>
-
+/* نمایش کامل متن پیامک با حفظ خطوط جدید، به جای نمایش در یک خط */
+.sms-body-cell {
+  white-space: pre-line !important;
+  word-break: break-word;
+  text-align: right !important;
+  min-width: 260px;
+  max-width: 420px;
+  line-height: 1.7;
+}
 </style>

@@ -7,7 +7,15 @@
       </q-card-section>
       <q-separator/>
       <q-card-section>
-        <q-table :loading="loading" flat bordered class="border-radius-table" :rows="rows" :filter="filter"
+        <div class="row items-center q-gutter-md q-mb-sm">
+          <q-toggle v-model="onlyNeedsReview" color="negative"
+                    :label="'فقط نظرسنجی‌های ضعیف بررسی‌نشده (' + needsReviewCount + ')'"/>
+          <div class="row items-center q-gutter-xs text-caption">
+            <span class="legend-box legend-box-poor"></span>
+            <span>نظرسنجی ضعیف، نیازمند بررسی دلیل نارضایتی</span>
+          </div>
+        </div>
+        <q-table :loading="loading" flat bordered class="border-radius-table" :rows="filteredRows" :filter="filter"
                  :columns="columns" :rows-per-page-options="[10]">
           <template v-slot:loading>
             <q-inner-loading showing color="primary"/>
@@ -27,7 +35,7 @@
             </q-input>
           </template>
           <template v-slot:body="props">
-            <q-tr :props="props" :class="isUrgentFollowUp(props.row) ? 'row-urgent-followup' : ''">
+            <q-tr :props="props" :class="rowClass(props.row)">
               <q-td key="customer" :props="props"> {{ props.row.customer ? props.row.customer.fullName : '-' }}</q-td>
               <q-td key="service_type" :props="props"> {{
                   props.row.service_type ? props.row.service_type.title : '-'
@@ -49,6 +57,23 @@
                         class="q-mr-xs">
                   <q-tooltip>نیازمند پیگیری امروز یا فردا</q-tooltip>
                 </q-icon>
+              </q-td>
+              <q-td key="rating" :props="props">
+                <template v-if="getSubmittedRating(props.row)">
+                  <q-badge :color="levelColor(getSubmittedRating(props.row).level)">
+                    {{ getSubmittedRating(props.row).level_label }}
+                    ({{ Number(getSubmittedRating(props.row).rating).toFixed(1) }})
+                  </q-badge>
+                  <q-icon v-if="getSubmittedRating(props.row).needs_review" name="notifications_active"
+                          color="negative" size="18px" class="q-mr-xs">
+                    <q-tooltip>نارضایتی مشتری؛ دلیل آن باید بررسی شود</q-tooltip>
+                  </q-icon>
+                  <q-icon v-else-if="getSubmittedRating(props.row).reviewed_at" name="task_alt"
+                          color="positive" size="18px" class="q-mr-xs">
+                    <q-tooltip>دلیل نارضایتی بررسی شده است</q-tooltip>
+                  </q-icon>
+                </template>
+                <span v-else>-</span>
               </q-td>
               <q-td key="action" :props="props" class="q-gutter-x-sm">
                 <q-btn @click.prevent="showDetails(props.row.id)" title="مشخصات بیشتر" dense round color="brown"
@@ -183,6 +208,9 @@
           <div class="text-subtitle1 text-weight-bold q-mt-sm" dir="ltr">
             {{ Number(selectedRating.rating).toFixed(1) }} / 5
           </div>
+          <q-badge :color="levelColor(selectedRating.level)" class="q-mt-xs text-body2">
+            سطح رضایت: {{ selectedRating.level_label }}
+          </q-badge>
 
           <div class="q-mt-md text-right" v-if="selectedRating.feedback">
             <div class="text-caption text-grey-7">بازخورد مشتری:</div>
@@ -192,6 +220,31 @@
             مشتری بازخورد متنی ثبت نکرده است
           </div>
         </q-card-section>
+        <template v-if="selectedRating && selectedRating.level === LEVEL_POOR">
+          <q-separator/>
+          <q-card-section class="text-right">
+            <template v-if="selectedRating.reviewed_at">
+              <div class="text-caption text-grey-7">نتیجه بررسی دلیل نارضایتی:</div>
+              <div class="text-body2">{{ selectedRating.review_description }}</div>
+              <div class="text-caption text-grey q-mt-xs">
+                {{ selectedRating.reviewer ? selectedRating.reviewer.name : '' }}
+                - {{ selectedRating.jalali_reviewed_at }}
+              </div>
+            </template>
+            <template v-else>
+              <q-banner dense rounded class="bg-red-1 text-negative q-mb-sm">
+                <template v-slot:avatar>
+                  <q-icon name="notifications_active" color="negative"/>
+                </template>
+                رضایت مشتری ضعیف است؛ دلیل نارضایتی را بررسی و نتیجه را ثبت کنید.
+              </q-banner>
+              <q-input outlined autogrow v-model="reviewDescription" label="دلیل نارضایتی و نتیجه بررسی"/>
+              <div class="text-center q-mt-sm">
+                <q-btn color="negative" rounded label="ثبت بررسی" :loading="reviewing" @click="submitReview()"/>
+              </div>
+            </template>
+          </q-card-section>
+        </template>
         <q-separator/>
         <q-card-actions align="center">
           <q-btn outline rounded color="accent" label="بستن" v-close-popup/>
@@ -213,6 +266,9 @@ function wrapCsvValue(val, formatFn) {
 // same status codes as backend AfterSalesService model
 const STATUS_PENDING = 1
 const STATUS_IN_PROGRESS = 2
+// same level codes as backend Rating model
+const LEVEL_POOR = 1
+const LEVEL_AVERAGE = 2
 
 export default {
   name: "ListAfterSalesService",
@@ -255,6 +311,7 @@ export default {
           label: 'تاریخ مراجعه نصاب',
           sortable: true
         },
+        {name: 'rating', field: 'rating', align: 'center', label: 'نظرسنجی'},
         {name: 'action', field: 'action', align: 'center', label: 'عملیات'}
       ],
       deleteConfirmDialog: false,
@@ -269,10 +326,21 @@ export default {
       sendSms: true,
       completing: false,
       ratingDlg: false,
-      selectedRating: null
+      selectedRating: null,
+      LEVEL_POOR,
+      onlyNeedsReview: this.$route.query.poor === '1',
+      reviewDescription: '',
+      reviewing: false
     }
   },
   computed: {
+    filteredRows() {
+      if (!this.onlyNeedsReview) return this.rows
+      return this.rows.filter(row => this.needsReview(row))
+    },
+    needsReviewCount() {
+      return this.rows.filter(row => this.needsReview(row)).length
+    },
     ratingFillPercent() {
       if (!this.selectedRating) return 0
       return (Number(this.selectedRating.rating) / 5) * 100
@@ -322,7 +390,6 @@ export default {
       const tomorrow = new Date(today)
       tomorrow.setDate(tomorrow.getDate() - 1)
 
-      console.log(followUpKey , this.toDateKey(today))
       return followUpKey === this.toDateKey(today) || followUpKey === this.toDateKey(tomorrow)
     },
     getSubmittedRating(service) {
@@ -331,7 +398,37 @@ export default {
     },
     showRatingDialog(service) {
       this.selectedRating = this.getSubmittedRating(service)
+      this.reviewDescription = ''
       this.ratingDlg = true
+    },
+    needsReview(row) {
+      const rating = this.getSubmittedRating(row)
+      return !!(rating && rating.needs_review)
+    },
+    rowClass(row) {
+      if (this.needsReview(row)) return 'row-poor-rating'
+      return this.isUrgentFollowUp(row) ? 'row-urgent-followup' : ''
+    },
+    levelColor(level) {
+      if (level === LEVEL_POOR) return 'negative'
+      if (level === LEVEL_AVERAGE) return 'orange'
+      return 'positive'
+    },
+    submitReview() {
+      if (!this.reviewDescription) {
+        this.$q.notify({type: 'negative', position: 'bottom', message: 'دلیل نارضایتی و نتیجه بررسی را وارد کنید'})
+        return
+      }
+      this.reviewing = true
+      api.put(`after-sales-service/rating-review/${this.selectedRating.id}`, {review_description: this.reviewDescription}).then(response => {
+        this.$q.notify({timeout: 3000, position: 'center', type: 'positive', message: response.data.message})
+        this.selectedRating = response.data.data
+        this.getData()
+      }).catch((error) => {
+        this.notifyError(error)
+      }).finally(() => {
+        this.reviewing = false
+      })
     },
     showDetails(id) {
       this.detailsDlg = true
@@ -404,6 +501,10 @@ export default {
           val = row.jalali_request_date || '-'
         else if (col.name === 'follow_up_date')
           val = row.jalali_follow_up_date || '-'
+        else if (col.name === 'rating') {
+          const rating = this.getSubmittedRating(row)
+          val = rating ? `${rating.level_label} (${Number(rating.rating).toFixed(1)})` : '-'
+        }
         else
           val = row[col.field] || '-'
         return wrapCsvValue(val, col.format)
@@ -412,6 +513,13 @@ export default {
       if (status !== true) {
         this.$q.notify({message: 'مرورگر دسترسی دانلود فایل را بسته است.', color: 'negative', icon: 'warning'})
       }
+    }
+  },
+  watch: {
+    // آلارم نظرسنجی ضعیف در منو با ?poor=1 به همین صفحه هدایت می‌کند
+    '$route.query.poor'(value) {
+      this.onlyNeedsReview = value === '1'
+      this.getData()
     }
   },
   created() {
@@ -442,6 +550,15 @@ export default {
 
 .row-urgent-followup :deep(td) {
   background-color: rgba(244, 67, 54, 0.1) !important;
+}
+
+.row-poor-rating :deep(td) {
+  background-color: rgba(244, 67, 54, 0.22) !important;
+}
+
+.legend-box-poor {
+  background-color: rgba(244, 67, 54, 0.22);
+  border: 1px solid rgba(244, 67, 54, 0.6);
 }
 
 .legend-box {
