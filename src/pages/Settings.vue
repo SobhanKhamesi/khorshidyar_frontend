@@ -10,14 +10,6 @@
         align="left"
         narrow-indicator
       >
-        <q-tab name="user">
-          <template v-slot:default>
-            <div style="display: flex;align-items: center;justify-content: center" class="q-gutter-x-sm">
-              <q-icon size="sm" name="ti-user"/>
-              <span>تنظیمات کاربر</span>
-            </div>
-          </template>
-        </q-tab>
         <q-tab name="category">
           <template v-slot:default>
             <div style="display: flex;align-items: center;justify-content: center" class="q-gutter-x-sm">
@@ -69,93 +61,6 @@
       </q-tabs>
       <q-separator inset/>
       <q-tab-panels v-model="tab" animated>
-        <q-tab-panel name="user">
-          <q-card flat class="border-radius-card">
-            <q-card class="row">
-              <q-card-section class="col-2">
-                <div class="text-h6">تنظیمات کاربر</div>
-              </q-card-section>
-              <q-card-section class="col-8"></q-card-section>
-            </q-card>
-            <q-separator inset/>
-              <div class="row q-col-gutter-md">
-                <div class="col-md-6 col-xs-12">
-                  <q-form @submit.prevent="changeUserInfo()">
-
-                    <q-card-section class="q-col-gutter-md">
-                      <q-input outlined v-model="name" label="نام"/>
-                      <q-input outlined v-model="username" label="نام کاربری" dir="ltr"
-                               input-class="text-right"/>
-
-                      <q-file accept=".jpg, .png, .jpeg"
-                              dir="rtl"
-                              clearable
-                              outlined
-                              v-model="profile"
-                              label="پروفایل"/>
-
-                      <q-file
-                        accept=".jpg, .png, .jpeg"
-                        dir="rtl"
-                        clearable
-                        outlined v-model="emza" label="امضاء ">
-                        <template v-slot:prepend>
-                          <q-icon name="attach_file"/>
-                        </template>
-                      </q-file>
-
-                    </q-card-section>
-
-                    <q-card-actions>
-                      <q-btn type="submit" rounded class="full-width" color="accent" label="ویرایش"/>
-                    </q-card-actions>
-                  </q-form>
-                </div>
-                <div class="col-md-6 col-xs-12">
-                  <q-form @submit.prevent="changePassword()">
-
-                    <q-card-section class="q-col-gutter-md">
-                      <q-input outlined dir="ltr" v-model="currentPassword"
-                               :type="isCurrentPw ? 'password' : 'text'"
-                               label="گذرواژه فعلی">
-                        <template v-slot:append>
-                          <q-icon
-                            :name="isCurrentPw ? 'visibility_off' : 'visibility'"
-                            class="cursor-pointer"
-                            @click="isCurrentPw = !isCurrentPw"
-                          />
-                        </template>
-                      </q-input>
-                      <q-input outlined dir="ltr" v-model="newPassword" :type="isNewPw ? 'password' : 'text'"
-                               label="گذرواژه جدید">
-                        <template v-slot:append>
-                          <q-icon
-                            :name="isNewPw ? 'visibility_off' : 'visibility'"
-                            class="cursor-pointer"
-                            @click="isNewPw = !isNewPw"
-                          />
-                        </template>
-                      </q-input>
-                      <q-input outlined dir="ltr" v-model="reNewPassword" :type="isReNewPw ? 'password' : 'text'"
-                               label="تکرار گذرواژه جدید">
-                        <template v-slot:append>
-                          <q-icon
-                            :name="isReNewPw ? 'visibility_off' : 'visibility'"
-                            class="cursor-pointer"
-                            @click="isReNewPw = !isReNewPw"
-                          />
-                        </template>
-                      </q-input>
-                    </q-card-section>
-                    <q-card-actions>
-                      <q-btn type="submit" rounded class="full-width" color="accent" label="ویرایش"/>
-                    </q-card-actions>
-                  </q-form>
-                </div>
-              </div>
-          </q-card>
-        </q-tab-panel>
-
         <q-tab-panel name="category">
           <q-dialog v-model="newOrderDlg">
             <q-card bordered>
@@ -773,8 +678,6 @@ export default {
   directives: {money: VMoney},
   data() {
     return {
-      emza: null,
-      profile: null,
       filter: '',
       loading: true,
       deleteConfirmDialog: false,
@@ -822,16 +725,8 @@ export default {
       editConfirmDialogAfterSaleTypes: false,
       editTitleAfterSaleTypes: "",
 
-      currentPassword: '',
-      newPassword: '',
-      reNewPassword: '',
-      username: '',
-      name: '',
-      tab: 'user',
+      tab: 'category',
 
-      isCurrentPw: true,
-      isNewPw: true,
-      isReNewPw: true,
 
       title: '',
       description: '',
@@ -1361,107 +1256,8 @@ export default {
           this.loading = false
         });
     },
-    //____________کاربران____________
-
-    getData() {
-      api.get('user/show')
-        .then(response => {
-          this.username = response.data.data.username
-          this.name = response.data.data.name
-          this.profile = response.data.data.profile
-        })
-        .finally(() => {
-          this.$q.loading.hide();
-        })
-    },
-
-    changePassword() {
-
-      this.$q.loading.show({
-        spinner: QSpinnerPuff,
-        spinnerSize: 140,
-        message: 'در حال پردازش اطلاعات',
-        sanitize: true
-      })
-
-
-      let postData = new FormData();
-
-      postData.append('currentPassword', this.currentPassword)
-      postData.append('newPassword', this.newPassword)
-      postData.append('reNewPassword', this.reNewPassword)
-
-      api.post('user/update-password', postData)
-        .then(response => {
-          this.$q.notify({
-            timeout: 3000,
-            position: 'center',
-            type: 'positive',
-            message: response.data.message
-          })
-          if (this.profile !== null) {
-            this.$q.localStorage.set('profile', response.data.data)
-            location.reload()
-          }
-        })
-
-        .then(() => {
-          this.currentPassword = '';
-          this.newPassword = '';
-          this.reNewPassword = '';
-        })
-        .finally(() => {
-          this.$q.loading.hide();
-        })
-    },
-
-    changeUserInfo() {
-
-      this.$q.loading.show({
-        spinner: QSpinnerPuff,
-        spinnerSize: 140,
-        message: 'در حال پردازش اطلاعات',
-        sanitize: true
-      })
-
-
-      let postData = new FormData();
-
-      postData.append('username', this.username)
-      postData.append('name', this.name)
-      postData.append('emza', this.emza)
-      if (this.profile !== null)
-        postData.append('profile', this.profile)
-
-      api.post('user/update-info', postData)
-        .then(response => {
-          this.$q.notify({
-            timeout: 3000,
-            position: 'center',
-            type: 'positive',
-            message: response.data.message
-          })
-          if (this.profile !== null) {
-            this.$q.localStorage.set('profile', response.data.data)
-            location.reload()
-          }
-        })
-        .finally(() => {
-          this.$q.loading.hide();
-        })
-    },
   },
   created() {
-
-
-    this.$q.loading.show({
-      spinner: QSpinnerPuff,
-      spinnerSize: 140,
-      message: 'در حال پردازش اطلاعات',
-      sanitize: true
-    });
-
-    this.getData();
     this.getDataCategory();
     this.getDataCategoryFailure();
     this.getDataCategoryAfterSaleTypes();

@@ -25,6 +25,9 @@ const routes = [
             {path: 'dashboard', name: 'Dashboard', component: () => import('pages/Dashboard.vue')},
             {path: 'settings', name: 'Settings', component: () => import('pages/Settings.vue')},
             {path: 'users', name: 'Users', component: () => import('pages/Users.vue')},
+            // پروفایل کاربر جاری؛ مدیر با شناسه، پروفایل سایر کاربران را می‌بیند
+            {path: 'profile', name: 'Profile', component: () => import('pages/Profile.vue')},
+            {path: 'profile/:id', name: 'UserProfile', component: () => import('pages/Profile.vue')},
 
             // ...routesWithPrefix('/report', [
             //     ...routesWithPrefix('/daily', [

@@ -54,6 +54,9 @@
                  @click="$q.fullscreen.toggle()" flat
                 size="11px" :icon="$q.fullscreen.isActive ? 'bi-fullscreen-exit' : 'bi-fullscreen'"
           />
+          <q-btn v-if="!$q.screen.lt.sm" round dense :to="{ name: 'Profile' }" flat icon="eva-person-outline">
+            <q-tooltip>پروفایل من</q-tooltip>
+          </q-btn>
           <q-btn :to="{ name: 'Users' }" flat icon="eva-people-outline" v-if="userRole === 0"/>
           <q-btn v-if="!$q.screen.lt.sm" round dense :to="{ name: 'Settings' }" flat  icon="bi-gear"/>
           <q-btn v-if="!$q.screen.lt.sm" round dense @click.prevent="logout" color="negative" icon="bi-power"/>
@@ -64,6 +67,15 @@
           <q-btn-dropdown>
 
             <q-list>
+
+              <q-item clickable v-close-popup :to="{ name: 'Profile' }">
+                <q-item-section avatar>
+                  <q-avatar icon="eva-person-outline" color="indigo-10" text-color="white"/>
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>پروفایل من</q-item-label>
+                </q-item-section>
+              </q-item>
 
               <q-item clickable v-close-popup :to="{ name: 'Users' }" v-if="userRole === 0">
                 <q-item-section avatar>

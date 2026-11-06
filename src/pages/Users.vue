@@ -29,11 +29,15 @@
 
                   <div v-if="user.status === 0">
                     <q-badge color="green-7" label="فعال"/>
+                    <q-btn flat icon="badge" color="indigo-7" title="پروفایل و دریافتی پروژه‌ها"
+                           :to="{ name: 'UserProfile', params: { id: user.id } }"/>
                     <q-btn flat icon="edit" color="yellow-7" title="ویرایش" @click="openEditUserDlg(user)"/>
                     <q-btn flat icon="block" color="red-7" title="مسدود کردن" @click="changeUserStatus(user.id)"/>
                   </div>
                   <div v-else-if="user.status === 1">
                     <q-badge color="red-7" label="غیر فعال"/>
+                    <q-btn flat icon="badge" color="indigo-7" title="پروفایل و دریافتی پروژه‌ها"
+                           :to="{ name: 'UserProfile', params: { id: user.id } }"/>
                     <q-btn flat icon="edit" color="yellow-7" title="ویرایش" @click="openEditUserDlg(user)"/>
                     <q-btn flat icon="task_alt" color="green-7" title="فعال کردن" @click="changeUserStatus(user.id)"/>
                   </div>
