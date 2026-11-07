@@ -77,7 +77,7 @@
         </q-markup-table>
 
         <!-- اقلام مصرفی -->
-        <q-expansion-item default-opened dense-toggle header-class="bg-grey-2 rounded-borders"
+        <q-expansion-item dense-toggle header-class="bg-grey-2 rounded-borders"
                           icon="inventory_2" :label="itemsTitle" :caption="'جمع: ' + money(data.items_cost) + ' تومان'">
           <div class="q-pa-sm">
             <q-markup-table v-if="priceRows.length" flat bordered dense>
@@ -112,7 +112,7 @@
         </q-expansion-item>
 
         <!-- دستمزدها -->
-        <q-expansion-item default-opened dense-toggle header-class="bg-grey-2 rounded-borders" icon="engineering"
+        <q-expansion-item dense-toggle header-class="bg-grey-2 rounded-borders" icon="engineering"
                           label="دستمزدها" :caption="'جمع: ' + money(data.wages_total) + ' تومان — در پروفایل هر فرد به‌عنوان دریافتی پروژه نمایش داده می‌شود'">
           <div class="q-pa-sm">
             <q-list v-if="data.wages.length" bordered separator class="rounded-borders">
@@ -146,7 +146,7 @@
         </q-expansion-item>
 
         <!-- هزینه‌ها و دریافتی‌های جانبی -->
-        <q-expansion-item default-opened dense-toggle header-class="bg-grey-2 rounded-borders" icon="receipt"
+        <q-expansion-item dense-toggle header-class="bg-grey-2 rounded-borders" icon="receipt"
                           label="هزینه‌ها و دریافتی‌های جانبی"
                           :caption="'هزینه: ' + money(data.costs_total) + ' — دریافتی: ' + money(data.income_total) + ' تومان'">
           <div class="q-pa-sm">

@@ -149,7 +149,7 @@
               در سال {{ earnings.year }} دریافتی ثبت نشده است
             </div>
             <q-list v-else bordered separator class="rounded-borders">
-              <q-expansion-item v-for="month in earnings.months" :key="month.month" default-opened
+              <q-expansion-item v-for="month in earnings.months" :key="month.month"
                                 header-class="bg-grey-2">
                 <template v-slot:header>
                   <q-item-section>

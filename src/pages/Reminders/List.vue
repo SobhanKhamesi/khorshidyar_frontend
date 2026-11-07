@@ -80,8 +80,12 @@
                   </q-tooltip>
                 </q-btn>
               </q-td>
-              <q-td key="title" :props="props">
+              <q-td key="title" :props="props" style="white-space: normal">
                 {{ props.row.title }}
+              </q-td>
+              <q-td key="type" :props="props">
+                <q-chip dense square text-color="white" :color="meta(props.row.type).color"
+                        :icon="meta(props.row.type).icon" :label="meta(props.row.type).label"/>
               </q-td>
               <q-td key="date" :props="props">
                 {{ props.row.jalali_date }}
@@ -94,6 +98,8 @@
                 {{ props.row.description }}
               </q-td>
               <q-td key="action" :props="props" class="q-gutter-x-sm">
+                <q-btn v-if="route(props.row.type)" title="مشاهده" dense round color="primary" icon="visibility"
+                       :to="route(props.row.type)"/>
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit" target="_blank"
                        :to="{ name:'ReminderEdit',params:{id:props.row.id} }"/>
                 <q-btn v-if="$access.can('personal.delete')" title="حذف" dense round color="negative" icon="delete"
@@ -140,6 +146,7 @@
 <script>
 import {exportFile} from 'quasar'
 import {api} from 'boot/axios'
+import {reminderMeta, reminderRoute} from 'src/utils/reminders'
 
 
 function wrapCsvValue(val, formatFn) {
@@ -183,7 +190,8 @@ export default {
       loading: true,
       columns: [
         {name: 'title', field: 'title', align: 'center', label: 'عنوان'},
-        {name: 'date', field: 'date', align: 'center', label: 'تاریخ'},
+        {name: 'type', field: row => reminderMeta(row.type).label, align: 'center', label: 'نوع'},
+        {name: 'date', field: 'jalali_date', align: 'center', label: 'تاریخ'},
         {name: 'status', field: 'status', align: 'center', label: 'وضعیت'},
         {name: 'action', field: 'action', align: 'center', label: 'عملیات'}
       ],
@@ -192,6 +200,12 @@ export default {
     }
   },
   methods: {
+    meta(type) {
+      return reminderMeta(type)
+    },
+    route(type) {
+      return reminderRoute(type)
+    },
     deleteConfirmation(id) {
       this.deleteConfirmDialog = true;
       this.itemFocusingId = id;
