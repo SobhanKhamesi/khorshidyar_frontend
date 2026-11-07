@@ -95,7 +95,7 @@
                     <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                            size="13px"
                            :to="{ name:'TicketEdit',params:{id:props.row.id} }"/>
-                    <q-btn title="حذف" dense round color="negative" icon="delete"
+                    <q-btn v-if="$access.can('personal.delete')" title="حذف" dense round color="negative" icon="delete"
                            size="13px"
                            @click.prevent="deleteConfirmation(props.row.id)"/>
                   </q-td>
@@ -182,7 +182,7 @@
                     <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                            size="13px"
                            :to="{ name:'TicketEdit',params:{id:props.row.id} }"/>
-                    <q-btn title="حذف" dense round color="negative" icon="delete"
+                    <q-btn v-if="$access.can('personal.delete')" title="حذف" dense round color="negative" icon="delete"
                            size="13px"
                            @click.prevent="deleteConfirmation(props.row.id)"/>
                   </q-td>
@@ -268,7 +268,7 @@
                     <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                            size="13px"
                            :to="{ name:'TicketEdit',params:{id:props.row.id} }"/>
-                    <q-btn title="حذف" dense round color="negative" icon="delete"
+                    <q-btn v-if="$access.can('personal.delete')" title="حذف" dense round color="negative" icon="delete"
                            size="13px"
                            @click.prevent="deleteConfirmation(props.row.id)"/>
                   </q-td>
@@ -344,7 +344,7 @@
                 <q-td key="action" :props="props" class="q-gutter-x-sm">
                   <q-btn title="ویرایش" dense color="yellow-9" icon="edit" rounded
                          :to="{ name:'CallEdit',params:{id:props.row.id} }"/>
-                  <q-btn title="حذف" dense color="negative" icon="delete" rounded
+                  <q-btn v-if="$access.can('personal.delete')" title="حذف" dense color="negative" icon="delete" rounded
                          @click.prevent="deleteConfirmation(props.row.id,'call')"/>
                 </q-td>
               </q-tr>
@@ -391,7 +391,7 @@
                   {{ props.row.created_at }}
                 </q-td>
                 <q-td key="operation" :props="props">
-                  <q-btn title="حذف" dense round color="negative" icon="delete"
+                  <q-btn v-if="$access.can('personal.delete')" title="حذف" dense round color="negative" icon="delete"
                          @click.prevent="deleteCommentConfirmation(props.row.id)"/>
                 </q-td>
               </q-tr>
@@ -491,7 +491,7 @@
                   {{ props.row.jalali_date }}
                 </q-td>
                 <q-td key="operation" :props="props">
-                  <q-btn title="حذف" dense round color="negative" icon="delete"
+                  <q-btn v-if="$access.can('personal.delete')" title="حذف" dense round color="negative" icon="delete"
                          @click.prevent="deleteAttachmentConfirmation(props.row.id)"/>
                 </q-td>
               </q-tr>

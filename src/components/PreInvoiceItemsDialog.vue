@@ -4,7 +4,7 @@
     <q-card class="dialog-card-big2" style="max-width: 900px; width: 900px;">
       <q-card-section class="row items-center">
         <div class="text-h6 col">{{ editing ? 'ویرایش ' + dlgTitle : dlgTitle }}</div>
-        <q-btn v-if="!editing && !loading" rounded dense outline color="yellow-9" icon="edit" label="ویرایش"
+        <q-btn v-if="!editing && !loading && (!isSuccess || $access.canManageSalesStages())" rounded dense outline color="yellow-9" icon="edit" label="ویرایش"
                class="q-px-sm" @click="startEdit"/>
       </q-card-section>
 
@@ -156,6 +156,7 @@ export default {
       items: [],
       finalPrice: null,
       grossProfit: null,
+      isSuccess: false,
       contractStatus: null,
       editItems: [],
       editFinalPrice: null,
@@ -247,7 +248,8 @@ export default {
             this.finalPrice = data.final_price
             this.grossProfit = data.gross_profit ?? null
             this.contractStatus = data.contract?.status ?? null
-            this.dlgTitle = Number(data.status) === 3 ? "اقلام فاکتور فروش" : "اقلام پیش فاکتور"
+            this.isSuccess = Number(data.status) === 3
+            this.dlgTitle = this.isSuccess ? "اقلام فاکتور فروش" : "اقلام پیش فاکتور"
           })
           .finally(() => {
             this.loading = false

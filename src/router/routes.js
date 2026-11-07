@@ -25,6 +25,8 @@ const routes = [
             {path: 'dashboard', name: 'Dashboard', component: () => import('pages/Dashboard.vue')},
             {path: 'settings', name: 'Settings', component: () => import('pages/Settings.vue')},
             {path: 'users', name: 'Users', component: () => import('pages/Users.vue')},
+            // سطوح دسترسی نقش‌ها (فقط مدیر)
+            {path: 'users/access-levels', name: 'AccessLevels', component: () => import('pages/AccessLevels.vue')},
             // پروفایل کاربر جاری؛ مدیر با شناسه، پروفایل سایر کاربران را می‌بیند
             {path: 'profile', name: 'Profile', component: () => import('pages/Profile.vue')},
             {path: 'profile/:id', name: 'UserProfile', component: () => import('pages/Profile.vue')},

@@ -52,7 +52,7 @@
                     icon="edit"
                     @click="openEditReferrerDialog(props.row)"
                 />
-                <q-btn
+                <q-btn v-if="$access.can('sales.delete')"
                     title="حذف"
                     dense round color="negative"
                     icon="delete"

@@ -82,9 +82,9 @@
                        dense round color="positive" icon="check"/>
                 <q-btn v-if="getSubmittedRating(props.row)" @click.prevent="showRatingDialog(props.row)"
                        title="نظرسنجی مشتری" dense round color="deep-purple" icon="star"/>
-                <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
+                <q-btn v-if="$access.can('after_sales.manage')" title="ویرایش" dense round color="yellow-9" icon="edit"
                        :to="{ name:'AfterSalesServiceEdit', params:{id:props.row.id} }"/>
-                <q-btn title="حذف" dense round color="negative" icon="delete"
+                <q-btn v-if="$access.can('after_sales.manage')" title="حذف" dense round color="negative" icon="delete"
                        @click.prevent="deleteConfirmation(props.row.id)"/>
               </q-td>
             </q-tr>
@@ -231,7 +231,8 @@
                 - {{ selectedRating.jalali_reviewed_at }}
               </div>
             </template>
-            <template v-else>
+            <!-- بررسی نارضایتی فقط توسط مدیر -->
+            <template v-else-if="$access.can('after_sales.review_ratings')">
               <q-banner dense rounded class="bg-red-1 text-negative q-mb-sm">
                 <template v-slot:avatar>
                   <q-icon name="notifications_active" color="negative"/>

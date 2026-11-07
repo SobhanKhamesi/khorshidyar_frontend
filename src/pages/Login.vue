@@ -99,6 +99,7 @@ export default {
           this.$q.localStorage.set('auth', true)
           this.$q.localStorage.set('token', response.data.data.token)
           this.$q.localStorage.set('role', response.data.data.role)
+          this.$q.localStorage.set('permissions', response.data.data.permissions || [])
           this.$q.localStorage.set('name', response.data.data.name)
           this.$q.localStorage.set('username', response.data.data.username)
           this.$q.localStorage.set('id', response.data.data.id)

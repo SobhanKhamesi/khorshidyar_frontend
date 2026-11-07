@@ -77,7 +77,7 @@
               <q-td key="action" :props="props" class="q-gutter-x-sm">
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit" target="_blank"
                        :to="{ name:'ProductEdit',params:{id:props.row.id} }"/>
-                <q-btn title="حذف" dense round color="negative" icon="delete"
+                <q-btn v-if="$access.can('inventory.manage')" title="حذف" dense round color="negative" icon="delete"
                        @click.prevent="deleteConfirmation(props.row.id)"/>
               </q-td>
             </q-tr>

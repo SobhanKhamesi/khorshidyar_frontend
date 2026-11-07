@@ -1,7 +1,8 @@
 import { route } from 'quasar/wrappers'
 import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
 import routes from './routes'
-import {LocalStorage} from "quasar";
+import {LocalStorage, Notify} from "quasar";
+import {canAccessRoute} from "src/utils/access";
 
 /*
  * If not building with SSR mode, you can
@@ -33,6 +34,10 @@ export default route(function (/* { store, ssrContext } */) {
       next({name: 'Login'})
     } else if (to.matched.some(record => record.meta.requireNoAuth) && LocalStorage.getItem('auth')) {
       next({name: 'Dashboard'})
+    } else if (LocalStorage.getItem('auth') && to.matched.some(record => record.meta.requireAuth) && !canAccessRoute(to.name)) {
+      // صفحه‌ای که برای نقش کاربر مجاز نیست
+      Notify.create({type: 'negative', position: 'center', message: 'دسترسی به این بخش برای شما مجاز نیست'})
+      next(from.name ? false : {name: 'Dashboard'})
     } else {
       next()
     }

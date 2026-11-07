@@ -98,7 +98,7 @@
               </q-td>
 
               <!-- سود نهایی پروژه (فقط مدیر)؛ تا تکمیل نهایی موقت است -->
-              <q-td v-if="isAdmin" key="final_profit" :props="props">
+              <q-td v-if="canSeeProfit" key="final_profit" :props="props">
                 <q-btn flat dense no-caps
                        :text-color="(props.row.final_profit || 0) < 0 ? 'negative' : 'positive'"
                        :label="moneyFormat(props.row.final_profit)"
@@ -128,13 +128,14 @@
                     @click.prevent="showConsumables(props.row)"
                     title="اقلام پیش‌نیاز و مصرفی" dense round color="teal" icon="inventory_2"/>
 
-                <q-btn v-if="isAdmin" @click.prevent="openFinance(props.row)"
+                <q-btn v-if="canSeeProfit" @click.prevent="openFinance(props.row)"
                        title="سود و زیان پروژه (اقلام، دستمزد، هزینه‌های جانبی)" dense round color="deep-purple" icon="calculate"/>
 
                 <q-btn :href="'/v1/print_install_service/' + props.row.id" target="_blank" title="پرینت" dense round
                        color="positive" icon="print"/>
 
-                <template v-if="!isInstaller">
+                <!-- ویرایش و حذف سرویس نصب با دسترسی مدیریت سرویس نصب -->
+                <template v-if="canManage">
                   <q-btn v-if="props.row.stage !== STAGE.COMPLETED" title="ویرایش" dense round color="yellow-9" icon="edit"
                          :to="{ name:'InstallServiceEdit', params:{id:props.row.id} }"/>
                   <q-btn title="حذف" dense round color="negative" icon="delete"
@@ -318,7 +319,6 @@ import InstallationWorkflowDialog, {STAGE} from 'components/InstallationWorkflow
 import InstallationItemsTable from 'components/InstallationItemsTable.vue'
 import ProjectFinanceDialog from 'components/ProjectFinanceDialog.vue'
 
-const ROLE_ADMIN = 0
 const ROLE_INSTALLER = 2
 
 function wrapCsvValue(val, formatFn) {
@@ -401,8 +401,13 @@ export default {
     isInstaller() {
       return this.userRole === ROLE_INSTALLER
     },
-    isAdmin() {
-      return this.userRole === ROLE_ADMIN
+    // ثبت، ویرایش، ارجاع، حذف و تکمیل نهایی (سطوح دسترسی)
+    canManage() {
+      return this.$access.can('installation.manage')
+    },
+    // سود و زیان پروژه
+    canSeeProfit() {
+      return this.$access.can('profit.view')
     },
     filteredRows() {
       return this.rows.filter(row =>
@@ -429,26 +434,27 @@ export default {
 
     // اقدام بعدی گردش کار برای کاربر جاری (در صورت داشتن دسترسی)
     nextAction(row) {
-      const isAdmin = this.userRole === ROLE_ADMIN
+      const canManage = this.canManage
 
       switch (row.stage) {
+        // ثبت اقلام: نصاب ارجاع شده یا مدیر؛ ارسال برای کارشناس و تکمیل نهایی: فقط مدیر؛ بررسی: کارشناس همان پروژه یا مدیر
         case STAGE.ASSIGNED:
-          if (!this.isInstaller || this.isAssignedInstaller(row))
+          if (canManage || this.isAssignedInstaller(row))
             return {mode: 'installer-submit', label: 'ثبت اقلام مصرفی', icon: 'inventory', color: 'blue'}
           return null
         case STAGE.NEEDS_FIX:
-          if (!this.isInstaller || this.isAssignedInstaller(row))
+          if (canManage || this.isAssignedInstaller(row))
             return {mode: 'installer-submit', label: 'ثبت رفع عیوب', icon: 'build', color: 'negative'}
           return null
         case STAGE.INSTALLER_SUBMITTED:
-          return this.isInstaller ? null
+          return !canManage ? null
               : {mode: 'send-to-review', label: 'ارسال برای کارشناس', icon: 'engineering', color: 'deep-purple'}
         case STAGE.UNDER_REVIEW:
-          return isAdmin || row.technical_expert_id === this.userId
+          return canManage || row.technical_expert_id === this.userId
               ? {mode: 'review', label: 'بررسی کارشناس', icon: 'fact_check', color: 'orange-8'}
               : null
         case STAGE.APPROVED:
-          return this.isInstaller ? null
+          return !canManage ? null
               : {mode: 'complete', label: 'تکمیل نهایی', icon: 'task_alt', color: 'positive'}
         default:
           return null
@@ -653,7 +659,7 @@ export default {
 
   created() {
     // ستون سود نهایی فقط برای مدیر
-    if (!this.isAdmin) this.columns = this.columns.filter(c => c.name !== 'final_profit')
+    if (!this.canSeeProfit) this.columns = this.columns.filter(c => c.name !== 'final_profit')
     this.getData()
   }
 }

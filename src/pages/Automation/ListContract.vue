@@ -89,9 +89,9 @@
                 {{ props.row.jalali_date }}
               </q-td>
               <q-td key="vazieat" :props="props">
-                <q-btn v-if="userRole===2 || userRole===0" @click="acceptRow(props.row)" color="positive"
+                <q-btn v-if="$access.canManageSalesStages()" @click="acceptRow(props.row)" color="positive"
                        icon="task_alt" rounded dense/>
-                <q-btn v-if="userRole===2 || userRole===0" @click="cancelRow(props.row)" color="negative"
+                <q-btn v-if="$access.canManageSalesStages()" @click="cancelRow(props.row)" color="negative"
                        class="q-mx-sm"
                        icon="eva-close-circle-outline" rounded dense/>
                 <q-badge v-else label="در انتظار تایید نهایی" color="orange"/>
@@ -128,7 +128,8 @@
                   <q-badge v-if="props.row.contract && props.row.contract.status === 2 && !props.row.contract.signed_seen_at"
                            color="negative" floating rounded label="!"/>
                 </q-btn>
-                <q-btn title="حذف" dense round color="negative" icon="delete"
+                <!-- «حذف» در اتوماسیون یعنی تبدیل به فروش ناموفق (برای صاحب اتوماسیون مجاز است) -->
+                <q-btn title="تبدیل به فروش ناموفق" dense round color="negative" icon="delete"
                        @click.prevent="deleteConfirmation(props.row.id)"/>
               </q-td>
             </q-tr>
@@ -371,7 +372,7 @@
                   {{ props.row.jalali_date }}
                 </q-td>
                 <q-td key="operation" :props="props">
-                  <q-btn title="حذف" dense round color="negative" icon="delete"
+                  <q-btn v-if="$access.can('sales.delete')" title="حذف" dense round color="negative" icon="delete"
                          @click.prevent="deleteCommentConfirmation(props.row.id)"/>
                 </q-td>
               </q-tr>

@@ -52,7 +52,8 @@
       </q-expansion-item>
     </router-link>
 
-    <q-expansion-item :content-inset-level="0"
+    <!-- هر بخش فقط برای نقش‌هایی که به آن دسترسی دارند نمایش داده می‌شود (src/utils/access.js) -->
+    <q-expansion-item v-if="can('LeadsList')" :content-inset-level="0"
                       group="side-bar-nav"
                       icon="bi-person"
                       label="سرنخ">
@@ -65,7 +66,7 @@
     </q-expansion-item>
 
 
-    <router-link :to="{ name: 'CustomersOpportunities' }">
+    <router-link v-if="can('CustomersOpportunities')" :to="{ name: 'CustomersOpportunities' }">
       <q-expansion-item
           icon="bi-person-add"
           expand-icon=" "
@@ -76,6 +77,7 @@
     </router-link>
 
     <q-expansion-item
+        v-if="can('CustomersList')"
         :content-inset-level="0"
         group="side-bar-nav"
         icon="bi-person-check"
@@ -90,7 +92,7 @@
 
     </q-expansion-item>
 
-    <router-link :to="{ name: 'introducerList' }">
+    <router-link v-if="can('introducerList')" :to="{ name: 'introducerList' }">
       <q-expansion-item
           icon="eva-people-outline"
           expand-icon=" "
@@ -137,6 +139,7 @@
 
 
     <q-expansion-item
+        v-if="can('ListRequest')"
         group="side-bar-nav"
         label="">
       <template v-slot:header>
@@ -205,6 +208,7 @@
     </q-expansion-item>
 
     <q-expansion-item
+        v-if="can('InstallServiceList')"
         group="side-bar-nav"
         label="">
       <template v-slot:header>
@@ -218,7 +222,7 @@
           <span class="blink-me">{{ installation_service_count }}</span>
         </q-item-section>
       </template>
-      <q-item v-ripple clickable :to="{ name: 'InstallServiceCreate' }">
+      <q-item v-if="can('InstallServiceCreate')" v-ripple clickable :to="{ name: 'InstallServiceCreate' }">
         <q-item-section>ثبت سرویس جدید</q-item-section>
       </q-item>
       <q-item v-ripple clickable :to="{ name: 'InstallServiceList' }">
@@ -230,6 +234,7 @@
     </q-expansion-item>
 
     <q-expansion-item
+        v-if="can('AfterSalesServiceList')"
         group="side-bar-nav"
         label="">
       <template v-slot:header>
@@ -247,7 +252,7 @@
           <span class="blink-me">{{ after_sale_count }}</span>
         </q-item-section>
       </template>
-      <q-item v-ripple clickable :to="{ name: 'AfterSalesServiceCreate' }">
+      <q-item v-if="can('AfterSalesServiceCreate')" v-ripple clickable :to="{ name: 'AfterSalesServiceCreate' }">
         <q-item-section>ثبت خدمت جدید</q-item-section>
       </q-item>
       <q-item v-ripple clickable :to="{ name: 'AfterSalesServiceList' }">
@@ -297,6 +302,7 @@
 
 
     <q-expansion-item
+        v-if="can('ProductsList')"
         group="side-bar-nav"
         icon="ti-package"
         label="انبارداری">
@@ -310,6 +316,7 @@
 
 
     <q-expansion-item
+        v-if="can('LeadsStatus')"
         group="side-bar-nav"
         icon="ti-bar-chart"
         label="نمودار">
@@ -341,12 +348,12 @@
     </q-expansion-item>
 
 
-    <q-expansion-item :content-inset-level="0"
+    <q-expansion-item v-if="can('TargetingList')" :content-inset-level="0"
                       group="side-bar-nav"
                       icon="ti-target"
                       label="هدف گذاری">
       <q-item v-ripple clickable :to="{ name: 'TargetingCreate' }"
-              v-if="userRole === 0 || userRole === 2"
+              v-if="can('TargetingCreate')"
       >
         <q-item-section>هدف گذاری جدید</q-item-section>
       </q-item>
@@ -380,6 +387,7 @@
     </q-expansion-item>
 
     <q-expansion-item
+        v-if="can('SmsList')"
         group="side-bar-nav"
         icon="bi-envelope-heart"
         label="پیامک">
@@ -401,13 +409,15 @@
 import {defineComponent} from 'vue'
 import {LocalStorage} from "quasar";
 import {api} from "boot/axios";
+import {canAccessRoute, currentRole, setAccess} from "src/utils/access";
 
 export default defineComponent({
   name: 'Navbar',
+  emits: ['notifications-changed'],
   data() {
     return {
       userName: LocalStorage.getItem('name'),
-      userRole: LocalStorage.getItem('role'),
+      userRole: currentRole(),
       profile: this.$q.localStorage.getItem('profile'),
 
       darkhast_count: 0,
@@ -427,10 +437,15 @@ export default defineComponent({
       contract_signed_count: 0,
       // نظرسنجی‌های ضعیف خدمات پس از فروش که هنوز بررسی نشده‌اند
       poor_rating_count: 0,
+      // تعداد آیتم‌های زنگوله منوی بالا (null: هنوز دریافت نشده)
+      notifications_count: null,
       check_sum_count: false,
     }
   },
   methods: {
+    can(routeName) {
+      return canAccessRoute(routeName)
+    },
     checking() {
 
       if (this.isRequesting) {
@@ -441,6 +456,10 @@ export default defineComponent({
 
       api.get('checking')
           .then(response => {
+
+            // به‌روزرسانی نقش و سطوح دسترسی (تغییرات ادمین بدون ورود مجدد اعمال می‌شود)
+            setAccess(response.data.data.role, response.data.data.permissions)
+            this.userRole = currentRole()
 
             this.darkhast_count = response.data.data.darkhast_count
             this.pishfactor_count = response.data.data.pishfactor_count
@@ -457,23 +476,21 @@ export default defineComponent({
 
             this.installation_service_count = response.data.data.installation_service_count
 
-            const intakeCount = response.data.data.intake_form_count || 0
-            if (intakeCount > this.intake_form_count)
-              this.notifyAlarm(intakeCount + ' فرم اولیه توسط مشتری/سرنخ تکمیل شده و در کارتابل درخواست‌ها منتظر بررسی است', 'ListRequest')
-            this.intake_form_count = intakeCount
-
-            const signedCount = response.data.data.contract_signed_count || 0
-            if (signedCount > this.contract_signed_count)
-              this.notifyAlarm(signedCount + ' قرارداد توسط مشتری امضا شده است (کارتابل مذاکره و قرارداد)', 'ListContract')
-            this.contract_signed_count = signedCount
-
+            this.intake_form_count = response.data.data.intake_form_count || 0
+            this.contract_signed_count = response.data.data.contract_signed_count || 0
             // نظرسنجی‌های ضعیف (امتیاز ۰ تا ۲) که دلیل نارضایتی‌شان هنوز بررسی نشده
-            const poorCount = response.data.data.poor_rating_count || 0
-            if (poorCount > this.poor_rating_count)
-              this.notifyAlarm(poorCount + ' نظرسنجی خدمات پس از فروش با رضایت «ضعیف» ثبت شده؛ دلیل نارضایتی را بررسی کنید',
-                  {name: 'AfterSalesServiceList', query: {poor: '1'}})
-            this.poor_rating_count = poorCount
+            this.poor_rating_count = response.data.data.poor_rating_count || 0
             this.check_installation_service_count = this.installation_service_count > 0;
+
+            // اعلان‌ها (فرم اولیه تکمیل شده، قرارداد امضا شده، نظرسنجی ضعیف و ...) در بک‌اند به‌صورت یادآوری ساخته می‌شوند
+            // و در زنگوله منوی بالا نمایش داده می‌شوند؛ با تغییر تعدادشان لیست زنگوله به‌روز می‌شود
+            const notificationsCount = response.data.data.notifications_count || 0
+            if (this.notifications_count !== null && notificationsCount !== this.notifications_count) {
+              this.$emit('notifications-changed')
+              if (notificationsCount > this.notifications_count)
+                this.playAlarm()
+            }
+            this.notifications_count = notificationsCount
 
             setTimeout(() => {
               this.isRequesting = false;
@@ -482,22 +499,8 @@ export default defineComponent({
           })
     },
 
-    // آلارم رویدادهای سمت مشتری (تکمیل فرم اولیه، امضای قرارداد)
-    notifyAlarm(message, routeName) {
-      this.$q.notify({
-        type: 'info',
-        icon: 'notifications_active',
-        position: 'top',
-        timeout: 0,
-        message,
-        actions: [
-          {
-            label: 'مشاهده', color: 'yellow',
-            handler: () => this.$router.push(typeof routeName === 'string' ? {name: routeName} : routeName)
-          },
-          {label: 'بستن', color: 'white'}
-        ]
-      })
+    // صدای کوتاه هنگام رسیدن اعلان جدید به زنگوله
+    playAlarm() {
       try {
         // صدای کوتاه آلارم (در صورت اجازه مرورگر)
         const ctx = new (window.AudioContext || window.webkitAudioContext)()

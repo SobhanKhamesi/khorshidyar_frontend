@@ -3,8 +3,12 @@
     <div class="row justify-around q-gutter-md">
       <div class="col-md-5 col-xs-12">
         <q-card bordered>
-          <q-card-section>
+          <q-card-section class="row items-center">
             <div class="text-h6">لیست کاربران</div>
+            <q-space/>
+            <!-- هر سمت (نقش) چه داده‌هایی ببیند و چه کارهایی انجام دهد -->
+            <q-btn unelevated color="indigo-7" icon="admin_panel_settings" label="سطوح دسترسی"
+                   :to="{ name: 'AccessLevels' }"/>
           </q-card-section>
 
           <q-list bordered>

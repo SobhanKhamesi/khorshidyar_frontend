@@ -71,7 +71,7 @@
               </div>
               <div class="col-auto">
                 <q-select
-                    v-if="userRole ===  0|| userRole === 2"
+                    v-if="$access.seesAllSales()"
                     rounded outlined
                     clearable
                     dense
@@ -177,7 +177,7 @@
                        @click="openDetailsDlg(props.row)"/>
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit" target="_blank"
                        :to="{ name:'LeadEdit',params:{id:props.row.id} }"/>
-                <q-btn title="حذف" dense round color="negative" icon="delete"
+                <q-btn v-if="$access.can('sales.delete')" title="حذف" dense round color="negative" icon="delete"
                        @click.prevent="deleteConfirmation(props.row.id,'lead')"/>
               </q-td>
             </q-tr>
@@ -250,7 +250,7 @@
                 <q-td key="action" :props="props" class="q-gutter-x-sm">
                   <q-btn title="ویرایش" dense color="yellow-9" icon="edit" round
                          :to="{ name:'CallEdit',params:{id:props.row.id} }"/>
-                  <q-btn title="حذف" dense color="negative" icon="delete" round
+                  <q-btn v-if="$access.can('sales.delete')" title="حذف" dense color="negative" icon="delete" round
                          @click.prevent="deleteConfirmation(props.row.id,'call')"/>
                 </q-td>
               </q-tr>
@@ -861,13 +861,13 @@ export default {
     },
     surveyTypeLabel(type) {
       if (type === 1) return 'خانگی'
-      if (type === 2) return 'صنعتی'
+      if (type === 2) return 'صنعتی'
       if (type === 3) return 'ثبت شده از مشتری'
       return '-'
     },
     surveyTypeColor(type) {
       if (type === 1) return 'teal'
-      if (type === 2) return 'deep-orange'
+      if (type === 2) return 'deep-orange'
       if (type === 3) return 'purple'
       return 'grey'
     },

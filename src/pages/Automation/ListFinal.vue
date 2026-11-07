@@ -86,7 +86,7 @@
                 {{ moneyFormat(props.row.final_price) }}
               </q-td>
               <!-- سود ناخالص اولیه: در لحظه‌ی فروش موفق ثبت شده و ثابت است (فقط مدیر) -->
-              <q-td v-if="isAdmin" key="gross_profit" :props="props">
+              <q-td v-if="canSeeProfit" key="gross_profit" :props="props">
                 <template v-if="props.row.gross_profit !== null && props.row.gross_profit !== undefined">
                   <q-btn flat dense no-caps :text-color="props.row.gross_profit < 0 ? 'negative' : 'positive'"
                          :label="moneyFormat(props.row.gross_profit)" @click="showPreInvoiceItems(props.row.id)">
@@ -107,15 +107,17 @@
                 {{ props.row.jalali_date }}
               </q-td>
               <q-td key="installation" :props="props">
+                <!-- ارجاع به نصاب فقط توسط مدیر -->
                 <q-btn
-                    v-if="!props.row.installation_service"
+                    v-if="!props.row.installation_service && $access.can('installation.manage')"
                     rounded dense no-caps color="accent" icon="engineering" label="ارجاع به نصاب"
                     class="q-px-sm"
                     :to="{ name: 'InstallServiceCreate', query: {customer: props.row.customer_id, automation: props.row.id} }"/>
+                <span v-else-if="!props.row.installation_service" class="text-grey-7">ارجاع نشده</span>
                 <q-btn
                     v-else
                     flat dense no-caps
-                    :to="{ name: 'InstallServiceList' }">
+                    :to="$access.canAccessRoute('InstallServiceList') ? { name: 'InstallServiceList' } : undefined">
                   <q-badge :color="props.row.installation_service.stage === 6 ? 'positive' : 'blue'" class="q-pa-xs">
                     {{ props.row.installation_service.stage_label }}
                   </q-badge>
@@ -146,7 +148,7 @@
                        color="positive" icon="print"/>
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                        :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
-                <q-btn v-if="(props.row.payments_count || 0) + (props.row.cheques_count || 0) > 0"
+                <q-btn v-if="$access.canManageSalesStages() && (props.row.payments_count || 0) + (props.row.cheques_count || 0) > 0"
                        title="اصلاحیه فاکتور و روش پرداخت" dense round color="deep-purple" icon="receipt_long"
                        @click.prevent="openAmendment(props.row.id)"/>
                 <q-btn :title="'قرارداد: ' + contractLabel(props.row)" dense round :color="contractColor(props.row)" icon="history_edu"
@@ -154,7 +156,8 @@
                   <q-badge v-if="props.row.contract && props.row.contract.status === 2 && !props.row.contract.signed_seen_at"
                            color="negative" floating rounded label="!"/>
                 </q-btn>
-                <q-btn title="تبدیل به فروش ناموفق" dense round color="negative" icon="cancel"
+                <!-- اصلاحیه و تبدیل فروش موفق به ناموفق فقط برای مدیر و مدیر فروش -->
+                <q-btn v-if="$access.canManageSalesStages()" title="تبدیل به فروش ناموفق" dense round color="negative" icon="cancel"
                        @click.prevent="openMarkFailed(props.row.id)"/>
 
               </q-td>
@@ -505,13 +508,14 @@ export default {
     },
   },
   computed: {
-    isAdmin() {
-      return this.userRole === 0
+    // ستون سود ناخالص فقط با دسترسی «سود و زیان پروژه»
+    canSeeProfit() {
+      return this.$access.can('profit.view')
     }
   },
   created() {
     // ستون سود ناخالص فقط برای مدیر
-    if (!this.isAdmin) this.columns = this.columns.filter(c => c.name !== 'gross_profit')
+    if (!this.canSeeProfit) this.columns = this.columns.filter(c => c.name !== 'gross_profit')
     this.getData()
   }
 

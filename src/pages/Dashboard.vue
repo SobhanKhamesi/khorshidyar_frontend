@@ -168,7 +168,7 @@
     </div>
 
 
-    <div class="col-md-7 col-xs-12 q-py-md q-px-lg" v-if="userRole === 0 || userRole === 2" >
+    <div class="col-md-7 col-xs-12 q-py-md q-px-lg" v-if="$access.can('dashboard.reports')" >
       <q-card flat class="border-radius-card">
         <q-card-section>
           <div class="text-h6">نمودار گزارش کاربر</div>

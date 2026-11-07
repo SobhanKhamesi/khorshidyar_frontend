@@ -25,14 +25,22 @@
             <q-menu v-if="!notificationsLoading" style="font-family: IRANSans,serif"
                     :offset="[67, 0]"
             >
-              <q-list>
-                <q-item v-if="expiredItemsCount > 0"
-                        v-for="(item,index) in expiredItems" :key="index"
-                        clickable @click="checkExpiredItem(item)">
-                  <q-item-section>
-                    <q-item-label>{{ item.title }}</q-item-label>
-                  </q-item-section>
-                </q-item>
+              <q-list separator style="min-width: 300px; max-width: 420px; max-height: 70vh" class="scroll">
+                <template v-if="expiredItemsCount > 0">
+                  <q-item v-for="(item,index) in expiredItems" :key="index"
+                          v-close-popup clickable @click="checkExpiredItem(item)">
+                    <q-item-section avatar>
+                      <q-icon :name="itemIcon(item).icon" :color="itemIcon(item).color"/>
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label lines="3">{{ item.title }}</q-item-label>
+                      <q-item-label caption v-if="item.type === 1">
+                        {{ itemIcon(item).label }}
+                        <span v-if="item.jalali_date"> - {{ item.jalali_date }}</span>
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </template>
                 <q-item v-else v-close-popup
                         clickable>
                   <q-item-section>
@@ -40,6 +48,9 @@
                       <i style="color: #cbcbcb">آیتمی جهت نمایش وجود ندارد</i>
                     </q-item-label>
                   </q-item-section>
+                </q-item>
+                <q-item v-close-popup clickable dense :to="{ name: 'RemindersList' }">
+                  <q-item-section class="text-center text-primary">مشاهده همه یادآوری ها</q-item-section>
                 </q-item>
               </q-list>
             </q-menu>
@@ -58,7 +69,7 @@
             <q-tooltip>پروفایل من</q-tooltip>
           </q-btn>
           <q-btn :to="{ name: 'Users' }" flat icon="eva-people-outline" v-if="userRole === 0"/>
-          <q-btn v-if="!$q.screen.lt.sm" round dense :to="{ name: 'Settings' }" flat  icon="bi-gear"/>
+          <q-btn v-if="!$q.screen.lt.sm && $access.can('settings.manage')" round dense :to="{ name: 'Settings' }" flat  icon="bi-gear"/>
           <q-btn v-if="!$q.screen.lt.sm" round dense @click.prevent="logout" color="negative" icon="bi-power"/>
         </div>
 
@@ -86,7 +97,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item clickable v-close-popup :to="{ name: 'Settings' }">
+              <q-item v-if="$access.can('settings.manage')" clickable v-close-popup :to="{ name: 'Settings' }">
                 <q-item-section avatar>
                   <q-avatar icon="eva-settings-2-outline" color="teal" text-color="white"/>
                 </q-item-section>
@@ -120,7 +131,7 @@
       show-if-above
       content-class="date-time-text"
     >
-      <Navbar/>
+      <Navbar @notifications-changed="getExpiredItems"/>
     </q-drawer>
     <q-page-container style="background: #ECF0F5">
       <router-view/>
@@ -132,6 +143,7 @@
 import {api} from 'boot/axios'
 import {LocalStorage, QSpinnerPuff} from "quasar";
 import Navbar from "components/Navbar.vue";
+import {reminderMeta, reminderRoute} from "src/utils/reminders";
 
 export default {
   name: 'MainLayout',
@@ -139,7 +151,7 @@ export default {
 
   data() {
     return {
-      userRole: this.$q.localStorage.getItem('role'),
+      userRole: Number(this.$q.localStorage.getItem('role')),
       lastLoggedInDate: this.$q.localStorage.getItem('lastLoggedInDate'),
       userName: LocalStorage.getItem('name'),
       notificationsLoading: true,
@@ -189,12 +201,17 @@ export default {
             , 500);
         })
     },
+    itemIcon(item) {
+      return item.type === 0 ? {icon: 'payments', color: 'orange-8', label: 'چک'} : reminderMeta(item.reminder_type)
+    },
     checkExpiredItem(item) {
       if (item.type === 0) {
         this.$router.push({name: 'CheckEdit', params: {id: item.id}})
-      } else {
-        this.$router.push({name: 'ReminderEdit', params: {id: item.id}})
+        return
       }
+      // اعلان‌های سیستمی به صفحه مربوطه می‌روند (با رسیدگی به آن، یادآوری خودکار تکمیل می‌شود)
+      const route = reminderRoute(item.reminder_type)
+      this.$router.push(route || {name: 'ReminderEdit', params: {id: item.id}})
     },
     currentTime() {
       const time = new Date();
