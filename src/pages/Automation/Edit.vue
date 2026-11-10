@@ -93,7 +93,7 @@
             <div class="col-12 q-gutter-y-md">
 
               <q-input
-                label="توضیحات بیشتر"
+                label="توضیحات درخواست"
                 v-model="description"
                 type="textarea"
                 outlined
@@ -314,7 +314,7 @@
             </div>
 
             <div class="col-12">
-              <q-input outlined autogrow v-model="home.description" label="توضیحات"/>
+              <q-input outlined autogrow v-model="home.description" label="توضیحات فرم بازدید"/>
             </div>
           </div>
         </q-card-section>
@@ -466,7 +466,7 @@
             </div>
 
             <div class="col-12">
-              <q-input outlined autogrow v-model="industrial.description" label="توضیحات"/>
+              <q-input outlined autogrow v-model="industrial.description" label="توضیحات فرم بازدید"/>
             </div>
           </div>
         </q-card-section>

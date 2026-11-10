@@ -86,9 +86,6 @@
               />
             </div>
 
-            <div v-if="requestMode === 'customer'" class="col-12">
-              <q-input outlined autogrow type="textarea" v-model="description" label="توضیحات (اختیاری)"/>
-            </div>
             <div v-if="requestMode === 'expert'" class="col-md-6 col-xs-12 q-gutter-y-md">
               <q-select
                 option-label="name"
@@ -110,6 +107,11 @@
                   </q-item>
                 </template>
               </q-select>
+            </div>
+
+            <!-- توضیحات خود درخواست (جدا از توضیحات فرم بازدید و پیش فاکتور) -->
+            <div class="col-12">
+              <q-input outlined autogrow type="textarea" v-model="description" label="توضیحات درخواست (اختیاری)"/>
             </div>
           </div>
         </q-card-section>
@@ -326,7 +328,7 @@
             </div>
 
             <div class="col-12">
-              <q-input outlined autogrow v-model="home.description" label="توضیحات"/>
+              <q-input outlined autogrow v-model="home.description" label="توضیحات فرم بازدید"/>
             </div>
           </div>
         </q-card-section>
@@ -474,7 +476,7 @@
             </div>
 
             <div class="col-12">
-              <q-input outlined autogrow v-model="industrial.description" label="توضیحات"/>
+              <q-input outlined autogrow v-model="industrial.description" label="توضیحات فرم بازدید"/>
             </div>
           </div>
         </q-card-section>

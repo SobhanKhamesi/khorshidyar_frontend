@@ -63,7 +63,7 @@
           <div class="col-12 q-gutter-y-md">
 
             <q-input
-              label="توضیحات بیشتر"
+              label="توضیحات پیش فاکتور"
               v-model="description"
               outlined
               type="textarea"
@@ -128,7 +128,8 @@
 
             <div v-if="isService(item.product)" class="col-md-5 col-xs-12">
               <q-input v-if="isCostService(item.product)" dense outlined type="number" dir="ltr" min="0" suffix="تومان"
-                       v-model.number="item.purchasePrice" label="مبلغ هزینه (برای ما)"/>
+                       v-model.number="item.purchasePrice" @update:model-value="v => item.price = v"
+                         label="مبلغ هزینه (به فاکتور مشتری اضافه می‌شود)"/>
               <q-input v-else dense outlined type="number" dir="ltr" min="0" suffix="تومان"
                        v-model.number="item.price" label="مبلغ دریافتی"/>
             </div>
@@ -530,8 +531,9 @@ export default {
       if (this.isService(item.product)) {
         const amount = Number(item.product.service_amount) || 0
         if (this.isCostService(item.product)) {
-          item.price = 0
           if (!item.purchasePrice) item.purchasePrice = amount
+          // مبلغ خدمت هزینه از مشتری هم دریافت می‌شود
+          item.price = item.purchasePrice
         } else {
           item.purchasePrice = 0
           if (!item.price) item.price = amount
@@ -654,7 +656,7 @@ export default {
         customer: this.customer_id.id,
         final_price: this.finalPrice,
         referrer_percent: this.introducerPercent,
-        description: this.description,
+        invoice_description: this.description,
         orders: orders
       }
 

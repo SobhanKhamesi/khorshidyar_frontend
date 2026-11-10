@@ -36,7 +36,8 @@
               </div>
               <div v-if="isService(item.product)" class="col-md-5 col-xs-8">
                 <q-input v-if="isCostService(item.product)" dense outlined type="number" dir="ltr" min="0" suffix="تومان"
-                         v-model.number="item.purchasePrice" label="مبلغ هزینه (برای ما)"/>
+                         v-model.number="item.purchasePrice" @update:model-value="v => item.price = v"
+                         label="مبلغ هزینه (به فاکتور مشتری اضافه می‌شود)"/>
                 <q-input v-else dense outlined type="number" dir="ltr" min="0" suffix="تومان"
                          v-model.number="item.price" label="مبلغ دریافتی"/>
               </div>
@@ -68,6 +69,9 @@
             {{ moneyFormat(Number(editFinalPrice || 0) - editPurchaseSum) }}</strong> تومان
             <span v-if="grossProfit !== null"> (سود ناخالص ثبت شده در فروش موفق ثابت می‌ماند)</span>
           </div>
+
+          <q-input outlined autogrow type="textarea" v-model="editDescription"
+                   label="توضیحات پیش فاکتور" hint="در پرینت پیش فاکتور زیر اقلام نمایش داده می‌شود"/>
 
           <q-input outlined autogrow type="textarea" v-model="reason" label="علت اصلاحیه (در سابقه کامنت‌ها ثبت می‌شود)"/>
         </div>
@@ -120,6 +124,12 @@
               <strong :class="profitClass(grossProfit)">{{ moneyFormat(grossProfit) }}</strong> تومان
             </div>
           </div>
+
+          <div class="q-mt-md">
+            <div class="text-subtitle2 q-mb-xs">توضیحات پیش فاکتور</div>
+            <div v-if="description" class="text-body2 bg-grey-2 q-pa-sm rounded-borders" style="white-space: pre-line">{{ description }}</div>
+            <div v-else class="text-caption text-grey">توضیحاتی ثبت نشده است</div>
+          </div>
         </template>
       </q-card-section>
 
@@ -160,6 +170,8 @@ export default {
       contractStatus: null,
       editItems: [],
       editFinalPrice: null,
+      description: '',
+      editDescription: '',
       reason: '',
       products: [],
       productOptions: []
@@ -208,8 +220,9 @@ export default {
       if (this.isService(p)) {
         const amount = Number(p.service_amount) || 0
         if (this.isCostService(p)) {
-          item.price = 0
           if (!item.purchasePrice) item.purchasePrice = amount
+          // مبلغ خدمت هزینه از مشتری هم دریافت می‌شود
+          item.price = item.purchasePrice
         } else {
           item.purchasePrice = 0
           if (!item.price) item.price = amount
@@ -240,12 +253,14 @@ export default {
       this.items = []
       this.finalPrice = null
       this.grossProfit = null
+      this.description = ''
 
       api.get('automation/' + this.automationId)
           .then(response => {
             const data = response.data.data
             this.items = data.orders || []
             this.finalPrice = data.final_price
+            this.description = data.invoice_description || ''
             this.grossProfit = data.gross_profit ?? null
             this.contractStatus = data.contract?.status ?? null
             this.isSuccess = Number(data.status) === 3
@@ -268,8 +283,13 @@ export default {
               price: Number(o.price),
               purchasePrice: o.purchase_price === null || o.purchase_price === undefined ? null : Number(o.purchase_price),
             }))
+            // مبلغ خدمت هزینه از مشتری هم دریافت می‌شود (ردیف‌های قدیمی با مبلغ فروش صفر)
+            this.editItems.forEach(i => {
+              if (this.isCostService(i.product)) i.price = Number(i.purchasePrice) || i.price
+            })
             if (!this.editItems.length) this.editItems.push(this.emptyItem())
             this.editFinalPrice = this.finalPrice !== null ? Number(this.finalPrice) : null
+            this.editDescription = this.description
             this.reason = ''
             this.editing = true
           })
@@ -288,13 +308,14 @@ export default {
       }
 
       this.saving = true
-      // فقط اقلام و مبلغ نهایی ارسال می‌شود؛ پرداختی‌ها و چک‌ها دست نمی‌خورند
+      // فقط اقلام، مبلغ نهایی و توضیحات پیش فاکتور ارسال می‌شود؛ پرداختی‌ها و چک‌ها دست نمی‌خورند
       api.post('automation/amend', {
         id: this.automationId,
         orders: this.editItems.map(i => ({
           orderProductId: i.product.id, orderCount: i.count, orderPrice: i.price, orderPurchasePrice: i.purchasePrice,
         })),
         final_price: this.editFinalPrice,
+        invoice_description: this.editDescription || '',
         reason: this.reason,
       })
           .then(response => {

@@ -247,7 +247,8 @@
 
               <div v-if="isService(item.product)" class="col-md-5 col-xs-12">
                 <q-input v-if="isCostService(item.product)" dense outlined type="number" dir="ltr" min="0" suffix="تومان"
-                         v-model.number="item.purchasePrice" label="مبلغ هزینه (برای ما)"/>
+                         v-model.number="item.purchasePrice" @update:model-value="v => item.price = v"
+                         label="مبلغ هزینه (به فاکتور مشتری اضافه می‌شود)"/>
                 <q-input v-else dense outlined type="number" dir="ltr" min="0" suffix="تومان"
                          v-model.number="item.price" label="مبلغ دریافتی"/>
               </div>
@@ -353,9 +354,10 @@
         <q-card-section class="row justify-end">
           <div class="col-12 q-gutter-y-md">
 
+            <!-- توضیحات پیش فاکتور (جدا از توضیحات درخواست)؛ در پرینت زیر اقلام نمایش داده می‌شود -->
             <q-input
-              label="توضیحات بیشتر"
-              v-model="description"
+              label="توضیحات پیش فاکتور"
+              v-model="invoiceDescription"
               outlined
               type="textarea"
               autogrow
@@ -624,7 +626,7 @@ export default {
 
       focusedAutomationId: '',
 
-      description: '',
+      invoiceDescription: '',
       newFailureDlg: false,
       titleFailure: '',
       descriptionFailure: '',
@@ -882,8 +884,9 @@ export default {
       if (this.isService(item.product)) {
         const amount = Number(item.product.service_amount) || 0
         if (this.isCostService(item.product)) {
-          item.price = 0
           if (!item.purchasePrice) item.purchasePrice = amount
+          // مبلغ خدمت هزینه از مشتری هم دریافت می‌شود
+          item.price = item.purchasePrice
         } else {
           item.purchasePrice = 0
           if (!item.price) item.price = amount
@@ -909,6 +912,7 @@ export default {
 
     resetInvoiceDialog() {
       this.invoiceItems = [emptyInvoiceItem(), emptyInvoiceItem(), emptyInvoiceItem()]
+      this.invoiceDescription = ''
       this.selectedInvoice = null
     },
 
@@ -934,6 +938,7 @@ export default {
       this.selectedInvoice = invoice
       this.invoiceItems = [emptyInvoiceItem(), emptyInvoiceItem(), emptyInvoiceItem()]
       this.finalPrice = null
+      this.invoiceDescription = ''
       this.acceptRowDlg = true;
 
       const ensureProducts = this.products.length === 0
@@ -957,6 +962,8 @@ export default {
           if (orders.length > 0) {
             this.invoiceItems = orders.map(order => this.mapOrderToInvoiceItem(order))
           }
+          // اگر قبلاً پیش فاکتوری ثبت شده و به مرحله درخواست برگشته، توضیحات قبلی آن نمایش داده می‌شود
+          this.invoiceDescription = response.data.data?.invoice_description || ''
         })
         .catch(() => {
           // در صورت خطا در واکشی آیتم های قبلی، همان آیتم های خالی پیش‌فرض باقی می‌ماند
@@ -978,7 +985,9 @@ export default {
         uid: Math.random().toString(36).slice(2),
         product: product,
         count: order.count,
-        price: order.price
+        // مبلغ خدمت هزینه از مشتری هم دریافت می‌شود (ردیف‌های قدیمی با مبلغ فروش صفر)
+        price: this.isCostService(product) ? (Number(order.purchase_price) || Number(order.price) || 0) : order.price,
+        purchasePrice: order.purchase_price === null || order.purchase_price === undefined ? null : Number(order.purchase_price)
       }
     },
 
@@ -1006,7 +1015,7 @@ export default {
       const payload = {
         id: this.selectedInvoice.id,
         final_price: this.finalPrice,
-        description: this.description,
+        invoice_description: this.invoiceDescription,
         orders: orders
       }
 

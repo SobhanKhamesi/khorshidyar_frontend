@@ -33,7 +33,8 @@
             </div>
             <div v-if="isService(item.product)" class="col-md-5 col-xs-8">
               <q-input v-if="isCostService(item.product)" dense outlined type="number" dir="ltr" min="0" suffix="تومان"
-                       v-model.number="item.purchasePrice" label="مبلغ هزینه (برای ما)"/>
+                       v-model.number="item.purchasePrice" @update:model-value="v => item.price = v"
+                         label="مبلغ هزینه (به فاکتور مشتری اضافه می‌شود)"/>
               <q-input v-else dense outlined type="number" dir="ltr" min="0" suffix="تومان"
                        v-model.number="item.price" label="مبلغ دریافتی"/>
             </div>
@@ -204,8 +205,9 @@ export default {
       if (this.isService(p)) {
         const amount = Number(p.service_amount) || 0
         if (this.isCostService(p)) {
-          item.price = 0
           if (!item.purchasePrice) item.purchasePrice = amount
+          // مبلغ خدمت هزینه از مشتری هم دریافت می‌شود
+          item.price = item.purchasePrice
         } else {
           item.purchasePrice = 0
           if (!item.price) item.price = amount
@@ -234,6 +236,10 @@ export default {
             price: Number(o.price),
             purchasePrice: o.purchase_price === null || o.purchase_price === undefined ? null : Number(o.purchase_price),
           }))
+          // مبلغ خدمت هزینه از مشتری هم دریافت می‌شود (ردیف‌های قدیمی با مبلغ فروش صفر)
+          this.items.forEach(i => {
+            if (this.isCostService(i.product)) i.price = Number(i.purchasePrice) || i.price
+          })
           this.finalPrice = a.final_price !== null ? Number(a.final_price) : null
           this.payments = (a.payments || []).map(p => ({uid: ++uid, method: p.method, amount: Number(p.amount), date: p.jalali_date || ''}))
           this.cheques = (a.cheques || []).map(c => ({
