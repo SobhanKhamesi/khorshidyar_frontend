@@ -557,6 +557,12 @@ export default {
     selectAutomation(automation) {
       if (this.purchaseSource !== '1') return
 
+      // با انتخاب فروش دیگر (یا وقتی آدرس خالی است) نشانی پروژه‌ی قید شده در قرارداد در آدرس نصب قرار می‌گیرد؛
+      // انتخاب دوباره‌ی همان فروش، آدرسی را که دستی ویرایش شده بازنویسی نمی‌کند
+      const projectAddress = automation.project_address || automation.address
+      if (projectAddress && (this.selectedAutomationId !== automation.id || !this.address))
+        this.address = projectAddress
+
       this.selectedAutomationId = automation.id
       this.productDescription = automation.description || ''
       // کالاهای فاکتور فروش (نه خدمات) به‌عنوان اقلام پیش‌نیاز پیشنهاد می‌شوند؛ قابل ویرایش است.

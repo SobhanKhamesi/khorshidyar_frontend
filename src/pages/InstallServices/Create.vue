@@ -538,7 +538,9 @@ export default {
         const goods = (automation.orders || []).filter(o => o.product && o.product.kind !== 2)
         if (goods.length) this.requiredItems = goods.map(o => ({product: o.product, quantity: Number(o.count)}))
       }
-      if (automation.address) this.address = automation.address
+      // نشانی پروژه‌ی قید شده در قرارداد این فروش به‌صورت خودکار در آدرس نصب قرار می‌گیرد (قابل ویرایش)
+      const projectAddress = automation.project_address || automation.address
+      if (projectAddress) this.address = projectAddress
     },
 
     onPurchaseSourceChange() {
