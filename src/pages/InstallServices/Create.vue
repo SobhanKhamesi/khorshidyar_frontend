@@ -243,17 +243,18 @@
                     </q-item-label>
                     <q-item-section class="q-mt-xs">
                       <div>محصولات فاکتور : </div>
-                      <div v-for="order in automation.orders" class="q-gutter-x-xs">
-                        <span class="text-grey-8">نام محصول : {{ order.product.name }}</span>
+                      <div v-for="order in automation.orders" :key="order.id" class="q-gutter-x-xs"
+                           :class="selectedAutomationId === automation.id ? 'text-white' : 'text-grey-8'">
+                        <span>نام محصول : {{ order.product.name }}</span>
                         <span>,</span>
-                        <span class="text-grey-8">تعداد :  {{ order.count }}</span>
+                        <span>تعداد :  {{ order.count }}</span>
                         <span>,</span>
-                        <span class="text-grey-8">قیمت :  {{ Number(order.price).toLocaleString('en-US') + ' تومان' }}</span>
+                        <span>قیمت :  {{ Number(order.price).toLocaleString('en-US') + ' تومان' }}</span>
                       </div>
                     </q-item-section>
                   </q-item-section>
                   <q-item-section side v-if="selectedAutomationId === automation.id">
-                    <q-icon name="check_circle"/>
+                    <q-icon name="check_circle" color="white"/>
                   </q-item-section>
                 </q-item>
               </q-list>

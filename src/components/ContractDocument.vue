@@ -212,6 +212,8 @@
 </template>
 
 <script>
+import {installPrintPageFooter} from 'src/utils/printPageFooter'
+
 const PERSIAN = '۰۱۲۳۴۵۶۷۸۹'
 
 /**
@@ -272,6 +274,13 @@ export default {
       if (value === null || value === undefined || value === '') return '..........'
       return this.num(Math.round(Number(value)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','))
     },
+  },
+  // در چاپ قرارداد به جای هدر/فوتر مرورگر (نام نرم‌افزار و لینک صفحه) فقط شماره صفحه و تاریخ و ساعت چاپ می‌آید
+  mounted() {
+    this.removePrintFooter = installPrintPageFooter()
+  },
+  beforeUnmount() {
+    if (this.removePrintFooter) this.removePrintFooter()
   }
 }
 </script>
@@ -401,18 +410,41 @@ ul {
   }
 }
 
+/* چاپ: متن پشت سر هم و در کل عرض صفحه جریان دارد و بخش‌ها برای جا شدن کامل به صفحه بعد نمی‌روند
+   (تا فضای خالی بی‌دلیل پایین صفحه‌ها نماند)؛ فقط تیتر از متن بعدش، ردیف جدول و کادر امضا جدا نمی‌شوند */
 @media print {
+  .contract-doc {
+    max-width: none;
+    line-height: 1.8;
+  }
+
   .contract-header {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  h3 {
-    break-after: avoid;
+  section {
+    padding: 0 4px;
   }
 
-  section {
-    break-inside: avoid-page;
+  h3 {
+    margin: 10px 0 4px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    orphans: 2;
+    widows: 2;
+  }
+
+  .doc-table tr, .signatures, .sign-box {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .contract-footer {
+    margin-top: 8px;
   }
 }
 </style>
