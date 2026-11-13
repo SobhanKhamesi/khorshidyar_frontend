@@ -2,7 +2,7 @@
   <q-page class="q-pa-md">
     <q-card flat class="border-radius-card">
       <q-card-section>
-        <div class="text-h6">ویرایش سرنخ</div>
+        <div class="text-h6">{{ $route.name === 'OpportunityEdit' ? 'ویرایش فرصت' : 'ویرایش سرنخ' }}</div>
       </q-card-section>
 
       <q-separator/>

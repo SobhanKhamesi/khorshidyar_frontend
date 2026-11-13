@@ -643,7 +643,8 @@ export default {
 
       // تب پرینت رو همینجا و همزمان با کلیک کاربر باز می‌کنیم تا مرورگر آن را پاپ‌آپ ناخواسته تشخیص ندهد؛
       // بعد از موفقیت‌آمیز بودن ثبت، آدرس واقعی پرینت را در همین تب قرار می‌دهیم.
-      const printTab = window.open('', '_blank')
+      const canPrint = this.$access.can('sales.print')
+      const printTab = canPrint ? window.open('', '_blank') : null
 
       const orders = this.invoiceItems.map(item => ({
         orderProductId: item.product.id,
@@ -669,7 +670,7 @@ export default {
 
             const automationId = response.data.data?.id
 
-            if (automationId) {
+            if (automationId && canPrint) {
               const printUrl = '/v1/print/' + automationId
               if (printTab) {
                 printTab.location.href = printUrl

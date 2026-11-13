@@ -119,13 +119,10 @@
                   </q-badge>
                 </q-btn>
 
-                <q-btn :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
+                <q-btn v-if="$access.can('sales.print')" :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
                        color="positive" icon="print"/>
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                        :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
-                <q-btn v-if="(props.row.payments_count || 0) + (props.row.cheques_count || 0) > 0"
-                       title="اصلاحیه فاکتور و روش پرداخت" dense round color="deep-purple" icon="receipt_long"
-                       @click.prevent="openAmendment(props.row.id)"/>
 
               </q-td>
 
@@ -139,7 +136,6 @@
 
     <!-- دیالوگ های نمایشی مشترک -->
     <survey-view-dialog v-model="surveyViewDlg" :automation-id="focusedAutomationId"/>
-    <amendment-dialog v-model="amendDlg" :automation-id="amendAutomationId" @saved="getData()"/>
     <pre-invoice-items-dialog v-model="preInvoiceItemsDlg" :automation-id="focusedAutomationId" @saved="getData()"/>
     <contract-info-dialog v-model="contractInfoDlg" :automation-id="focusedAutomationId" @saved="getData()"/>
 
@@ -232,7 +228,6 @@
 import {exportFile, LocalStorage} from 'quasar'
 import {api} from 'boot/axios'
 import SurveyViewDialog from 'components/SurveyViewDialog.vue'
-import AmendmentDialog from 'components/AmendmentDialog.vue'
 import PreInvoiceItemsDialog from 'components/PreInvoiceItemsDialog.vue'
 import ContractInfoDialog from 'components/ContractInfoDialog.vue'
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
@@ -252,12 +247,10 @@ function wrapCsvValue(val, formatFn) {
 
 export default {
   name: "listcanseling",
-  components: {AmendmentDialog, ReferrerPercentEdit, CustomerInfoDialog, SurveyViewDialog, PreInvoiceItemsDialog, ContractInfoDialog},
+  components: {ReferrerPercentEdit, CustomerInfoDialog, SurveyViewDialog, PreInvoiceItemsDialog, ContractInfoDialog},
   data() {
 
     return {
-      amendDlg: false,
-      amendAutomationId: '',
       customerInfoDlg: false,
       customerInfoTarget: null,
 
@@ -307,11 +300,6 @@ export default {
     }
   },
   methods: {
-    // اصلاحیه فاکتور و روش پرداخت (در هر مرحله)
-    openAmendment(id) {
-      this.amendAutomationId = id
-      this.amendDlg = true
-    },
     openCustomerInfo(customer) {
       this.customerInfoTarget = customer
       this.customerInfoDlg = true

@@ -116,13 +116,10 @@
                   </q-badge>
                 </q-btn>
 
-                <q-btn :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
+                <q-btn v-if="$access.can('sales.print')" :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
                        color="positive" icon="print"/>
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                        :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
-                <q-btn v-if="(props.row.payments_count || 0) + (props.row.cheques_count || 0) > 0"
-                       title="اصلاحیه فاکتور و روش پرداخت" dense round color="deep-purple" icon="receipt_long"
-                       @click.prevent="openAmendment(props.row.id)"/>
                 <q-btn :title="'قرارداد: ' + contractLabel(props.row)" dense round :color="contractColor(props.row)" icon="history_edu"
                        :to="{ name: 'AutomationContract', params: {id: props.row.id} }">
                   <q-badge v-if="props.row.contract && props.row.contract.status === 2 && !props.row.contract.signed_seen_at"
@@ -332,7 +329,6 @@
 
     <!-- ============ دیالوگ نمایش فرم بازدید ============ -->
     <survey-view-dialog v-model="surveyViewDlg" :automation-id="focusedAutomationId"/>
-    <amendment-dialog v-model="amendDlg" :automation-id="amendAutomationId" @saved="getData()"/>
     <pre-invoice-items-dialog v-model="preInvoiceItemsDlg" :automation-id="focusedAutomationId" @saved="getData()"/>
     <contract-info-dialog v-model="contractInfoDlg" :automation-id="focusedAutomationId" @saved="getData()"/>
 
@@ -461,7 +457,6 @@
 import {exportFile, LocalStorage, QSpinnerPuff} from 'quasar'
 import {api} from 'boot/axios'
 import SurveyViewDialog from 'components/SurveyViewDialog.vue'
-import AmendmentDialog from 'components/AmendmentDialog.vue'
 import PreInvoiceItemsDialog from "components/PreInvoiceItemsDialog.vue";
 import ContractInfoDialog from "components/ContractInfoDialog.vue";
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
@@ -481,11 +476,9 @@ function wrapCsvValue(val, formatFn) {
 
 export default {
   name: "ListNegotiation",
-  components: {AmendmentDialog, ReferrerPercentEdit, CustomerInfoDialog, ContractInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog},
+  components: {ReferrerPercentEdit, CustomerInfoDialog, ContractInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog},
   data() {
     return {
-      amendDlg: false,
-      amendAutomationId: '',
       customerInfoDlg: false,
       customerInfoTarget: null,
 
@@ -555,11 +548,6 @@ export default {
     }
   },
   methods: {
-    // اصلاحیه فاکتور و روش پرداخت (در هر مرحله)
-    openAmendment(id) {
-      this.amendAutomationId = id
-      this.amendDlg = true
-    },
     contractColor(row) {
       return {1: 'blue', 2: 'positive'}[row.contract?.status] || 'blue-grey'
     },

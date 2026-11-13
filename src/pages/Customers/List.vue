@@ -255,7 +255,7 @@
                   </q-badge>
                 </q-td>
                 <q-td key="action" :props="props" class="q-gutter-x-sm">
-                  <q-btn :href="'/v1/print_install_service/' + props.row.id" target="_blank" title="پرینت"
+                  <q-btn v-if="$access.can('installation.print')" :href="'/v1/print_install_service/' + props.row.id" target="_blank" title="پرینت"
                          dense round color="positive" icon="print"/>
                   <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                          :to="{ name:'InstallServiceEdit', params:{id:props.row.id} }"/>
@@ -397,7 +397,7 @@
                   {{ props.row.failure ? props.row.failure.title : '-' }}
                 </q-td>
                 <q-td key="action" :props="props" class="q-gutter-x-sm">
-                  <q-btn :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
+                  <q-btn v-if="$access.can('sales.print')" :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
                          color="positive" icon="print"/>
                   <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                          :to="{ name:'EditAutomation', params:{id:props.row.id} }"/>
@@ -623,6 +623,11 @@ export default {
             })
 
             this.getCustomerData();
+            this.deleteConfirmDialog = false;
+          })
+          .catch(() => {
+            // پیام خطا توسط interceptor نمایش داده می‌شود
+            this.loading = false;
             this.deleteConfirmDialog = false;
           });
     },

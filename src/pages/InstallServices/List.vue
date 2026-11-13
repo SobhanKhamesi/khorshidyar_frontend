@@ -131,7 +131,7 @@
                 <q-btn v-if="canSeeProfit" @click.prevent="openFinance(props.row)"
                        title="سود و زیان پروژه (اقلام، دستمزد، هزینه‌های جانبی)" dense round color="deep-purple" icon="calculate"/>
 
-                <q-btn :href="'/v1/print_install_service/' + props.row.id" target="_blank" title="پرینت" dense round
+                <q-btn v-if="$access.can('installation.print')" :href="'/v1/print_install_service/' + props.row.id" target="_blank" title="پرینت" dense round
                        color="positive" icon="print"/>
 
                 <!-- ویرایش و حذف سرویس نصب با دسترسی مدیریت سرویس نصب -->

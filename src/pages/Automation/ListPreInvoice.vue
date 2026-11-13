@@ -113,13 +113,10 @@
                   </q-badge>
                 </q-btn>
 
-                <q-btn :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
+                <q-btn v-if="$access.can('sales.print')" :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
                        color="positive" icon="print"/>
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                        :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
-                <q-btn v-if="(props.row.payments_count || 0) + (props.row.cheques_count || 0) > 0"
-                       title="اصلاحیه فاکتور و روش پرداخت" dense round color="deep-purple" icon="receipt_long"
-                       @click.prevent="openAmendment(props.row.id)"/>
                 <!-- «حذف» در اتوماسیون یعنی تبدیل به فروش ناموفق (برای صاحب اتوماسیون مجاز است) -->
                 <q-btn title="تبدیل به فروش ناموفق" dense round color="negative" icon="delete"
                        @click.prevent="deleteConfirmation(props.row.id)"/>
@@ -462,7 +459,6 @@
     </q-dialog>
 
     <survey-view-dialog v-model="surveyViewDlg" :automation-id="surveyViewAutomationId"/>
-    <amendment-dialog v-model="amendDlg" :automation-id="amendAutomationId" @saved="getData()"/>
     <pre-invoice-items-dialog v-model="viewItemsDlg" :automation-id="focusedAutomationId" @saved="getData()"/>
     <CustomerInfoDialog v-model="customerInfoDlg" :customer="customerInfoTarget"/>
 
@@ -473,7 +469,6 @@
 import {exportFile, LocalStorage, QSpinnerPuff} from 'quasar'
 import {api} from 'boot/axios'
 import SurveyViewDialog from "components/SurveyViewDialog.vue";
-import AmendmentDialog from 'components/AmendmentDialog.vue'
 import PreInvoiceItemsDialog from "components/PreInvoiceItemsDialog.vue";
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
 import ReferrerPercentEdit from "components/ReferrerPercentEdit.vue";
@@ -508,11 +503,9 @@ function emptyCheque() {
 
 export default {
   name: "ListPreInvoice",
-  components: {AmendmentDialog, ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog},
+  components: {ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog},
   data() {
     return {
-      amendDlg: false,
-      amendAutomationId: '',
       customerInfoDlg: false,
       customerInfoTarget: null,
 
@@ -595,11 +588,6 @@ export default {
     }
   },
   methods: {
-    // اصلاحیه فاکتور و روش پرداخت (در هر مرحله)
-    openAmendment(id) {
-      this.amendAutomationId = id
-      this.amendDlg = true
-    },
     openCustomerInfo(customer) {
       this.customerInfoTarget = customer
       this.customerInfoDlg = true

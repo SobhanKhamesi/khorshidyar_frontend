@@ -115,9 +115,6 @@
                 <!--                       color="positive" icon="print"/>-->
                 <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                        :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
-                <q-btn v-if="(props.row.payments_count || 0) + (props.row.cheques_count || 0) > 0"
-                       title="اصلاحیه فاکتور و روش پرداخت" dense round color="deep-purple" icon="receipt_long"
-                       @click.prevent="openAmendment(props.row.id)"/>
                 <!-- «حذف» در اتوماسیون یعنی تبدیل به فروش ناموفق (برای صاحب اتوماسیون مجاز است) -->
                 <q-btn title="تبدیل به فروش ناموفق" dense round color="negative" icon="delete"
                        @click.prevent="deleteConfirmation(props.row.id)"/>
@@ -560,7 +557,6 @@
 
 
     <survey-view-dialog v-model="surveyViewDlg" :automation-id="surveyViewAutomationId"/>
-    <amendment-dialog v-model="amendDlg" :automation-id="amendAutomationId" @saved="getData()"/>
     <intake-form-dialog v-model="intakeFormDlg" :automation-id="intakeFormAutomationId" @seen="markIntakeSeen"/>
     <CustomerInfoDialog v-model="customerInfoDlg" :customer="customerInfoTarget"/>
 
@@ -572,7 +568,6 @@ import {exportFile, LocalStorage, QSpinnerPuff} from 'quasar'
 import {VMoney} from "v-money";
 import {api} from 'boot/axios'
 import SurveyViewDialog from "components/SurveyViewDialog.vue";
-import AmendmentDialog from 'components/AmendmentDialog.vue'
 import IntakeFormDialog from "components/IntakeFormDialog.vue";
 import PreInvoiceItemsDialog from "components/PreInvoiceItemsDialog.vue";
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
@@ -602,12 +597,10 @@ function emptyInvoiceItem() {
 
 export default {
   name: "ListRequest",
-  components: {AmendmentDialog, ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog, IntakeFormDialog},
+  components: {ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog, IntakeFormDialog},
   directives: {money: VMoney},
   data() {
     return {
-      amendDlg: false,
-      amendAutomationId: '',
       intakeFormDlg: false,
       intakeFormAutomationId: '',
       customerInfoDlg: false,
@@ -704,11 +697,6 @@ export default {
     }
   },
   methods: {
-    // اصلاحیه فاکتور و روش پرداخت (در هر مرحله)
-    openAmendment(id) {
-      this.amendAutomationId = id
-      this.amendDlg = true
-    },
     // نمایش فرم اولیه‌ای که مشتری تکمیل کرده است
     // فرم تکمیل شده همان فرم بازدید درخواست است؛ در غیر این صورت وضعیت لینک (کپی/ارسال مجدد) نمایش داده می‌شود
     showIntakeForm(row) {

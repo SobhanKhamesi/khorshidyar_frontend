@@ -33,9 +33,13 @@
             <td>دریافتی‌های جانبی (خدمات ارائه شده)</td>
             <td class="text-left text-positive">{{ money(data.income_total) }}</td>
           </tr>
+          <tr v-if="data.is_internal">
+            <td>قیمت خرید کالاهای فاکتور فروش</td>
+            <td class="text-left text-negative">{{ money(-data.invoice_cost) }}</td>
+          </tr>
           <tr>
             <td>
-              هزینه‌ی واقعی اقلام مصرف شده
+              هزینه‌ی واقعی اقلام مصرفی نصب
               <span v-if="data.items_basis === 'required'" class="text-caption text-orange-9">
                 (برآورد از اقلام پیش‌نیاز؛ نصاب هنوز مصرف واقعی را ثبت نکرده)
               </span>
@@ -76,7 +80,37 @@
           </tbody>
         </q-markup-table>
 
-        <!-- اقلام مصرفی -->
+        <!-- کالاهای فاکتور فروش -->
+        <q-expansion-item v-if="data.is_internal" dense-toggle header-class="bg-grey-2 rounded-borders"
+                          icon="receipt_long" label="کالاهای فاکتور فروش"
+                          :caption="'جمع قیمت خرید: ' + money(data.invoice_cost) + ' تومان'">
+          <div class="q-pa-sm">
+            <q-markup-table v-if="data.invoice_goods.length" flat bordered dense>
+              <thead>
+              <tr>
+                <th class="text-center">کالا</th>
+                <th class="text-center">تعداد</th>
+                <th class="text-center">قیمت خرید واحد (تومان)</th>
+                <th class="text-center">جمع</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr v-for="g in data.invoice_goods" :key="g.id">
+                <td class="text-center">{{ g.product_name }}</td>
+                <td class="text-center">{{ g.quantity }}</td>
+                <td class="text-center">{{ money(g.unit_purchase_price) }}</td>
+                <td class="text-center">{{ money(g.total) }}</td>
+              </tr>
+              </tbody>
+            </q-markup-table>
+            <div v-else class="text-grey text-center q-pa-sm">کالایی در فاکتور فروش ثبت نشده است</div>
+            <div class="text-caption text-grey-8 q-mt-sm">
+              قیمت خرید از فاکتور فروش خوانده می‌شود و با اصلاحیه‌ی فاکتور تغییر می‌کند.
+            </div>
+          </div>
+        </q-expansion-item>
+
+        <!-- اقلام مصرفی نصب -->
         <q-expansion-item dense-toggle header-class="bg-grey-2 rounded-borders"
                           icon="inventory_2" :label="itemsTitle" :caption="'جمع: ' + money(data.items_cost) + ' تومان'">
           <div class="q-pa-sm">
@@ -321,7 +355,7 @@ export default {
     },
     itemsTitle() {
       if (!this.data) return ''
-      return this.data.items_basis === 'required' ? 'اقلام پیش‌نیاز (برآورد هزینه)' : 'اقلام مصرف شده (ثبت نصاب)'
+      return this.data.items_basis === 'required' ? 'اقلام مصرفی نصب - پیش‌نیاز (برآورد هزینه)' : 'اقلام مصرفی نصب (ثبت نصاب)'
     },
     pricesChanged() {
       return this.data && this.priceRows.some(r => {

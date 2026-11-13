@@ -174,14 +174,13 @@
     <section>
       <h3>پیوست شماره ۱ - جدول اقلام و قیمت‌ها</h3>
       <table class="doc-table">
-        <thead><tr><th>ردیف</th><th>شرح کالا/خدمت</th><th>تعداد</th><th>فی (تومان)</th><th>مبلغ (تومان)</th></tr></thead>
+        <thead><tr><th>ردیف</th><th>نام محصول</th><th>توضیحات</th></tr></thead>
         <tbody>
         <tr v-for="(item, i) in items" :key="'i' + i">
-          <td>{{ num(i + 1) }}</td><td>{{ v(item.title) }}</td><td>{{ num(item.count) }}</td>
-          <td>{{ money(item.price) }}</td><td>{{ money(item.total) }}</td>
+          <td>{{ num(i + 1) }}</td><td>{{ v(item.title) }}</td><td class="desc-cell">{{ num(item.description) || '-' }}</td>
         </tr>
-        <tr v-if="!items.length"><td colspan="5">-</td></tr>
-        <tr class="total-row"><td colspan="4">مبلغ کل قرارداد</td><td>{{ money(data.total) }}</td></tr>
+        <tr v-if="!items.length"><td colspan="3">-</td></tr>
+        <tr class="total-row"><td colspan="2">مبلغ نهایی فاکتور</td><td>{{ money(data.total) }} تومان</td></tr>
         </tbody>
       </table>
     </section>
@@ -247,8 +246,9 @@ export default {
     techItems() {
       return (this.f.tech_items || []).filter(i => i && (i.title || i.product_id))
     },
+    // ردیف‌های پیوست ۱؛ در پیش‌نمایش ویرایش، توضیحات در حال تایپ از fields خوانده می‌شود
     items() {
-      return this.data.items || []
+      return this.f.appendix_items || this.data.items || []
     },
     cheques() {
       return this.data.cheques || []
@@ -388,6 +388,11 @@ ul {
 
 .doc-table th {
   background: #f5f7fb;
+}
+
+.doc-table td.desc-cell {
+  text-align: center;
+  white-space: pre-line;
 }
 
 .total-row td {

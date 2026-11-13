@@ -76,7 +76,7 @@ const ROUTE_RULES = {
 
   LeadCreate: SALES, LeadEdit: SALES, LeadsList: SALES,
   CustomerCreate: SALES, CustomerEdit: SALES, CustomersList: SALES,
-  CustomersOpportunities: SALES, introducerList: SALES,
+  CustomersOpportunities: SALES, OpportunityEdit: SALES, introducerList: SALES,
   CallCreate: SALES, CallEdit: SALES,
   CreateQuickPreInvoice: SALES, CreateRequest: SALES, EditAutomation: SALES, AutomationContract: SALES,
   ListRequest: SALES, ListPreInvoice: SALES, ListContract: SALES, ListFinal: SALES, listcanseling: SALES,

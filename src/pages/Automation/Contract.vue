@@ -41,7 +41,7 @@
 
           <q-card-section>
             <div v-if="isSigned" class="text-caption text-grey-8 q-mb-sm">
-              قرارداد امضا شده و قابل ویرایش نیست. برای تغییرات، اصلاحیه فاکتور ثبت کنید (متن امضا شده تغییر نمی‌کند).
+              قرارداد امضا شده و قابل ویرایش نیست. برای تغییرات، از دکمه ویرایش در دیالوگ «فاکتور فروش» یا «قرارداد و پرداختی‌ها» استفاده کنید (متن امضا شده تغییر نمی‌کند).
             </div>
             <!-- ============ ماده ۳ - مشخصات فنی و اقلام ============ -->
             <div class="q-mb-md">
@@ -78,6 +78,18 @@
               <q-btn v-if="!isSigned" dense outline rounded color="primary" icon="add" label="افزودن آیتم دستی" @click="addTechItem"/>
             </div>
 
+            <!-- ============ پیوست ۱ - جدول اقلام ============ -->
+            <div class="q-mb-md">
+              <div class="text-subtitle2 text-primary">پیوست ۱ - جدول اقلام</div>
+              <div class="text-caption text-grey-8 q-mb-sm">
+                در جدول پیوست فقط نام محصول و توضیحات زیر نمایش داده می‌شود و مبلغ نهایی فاکتور پایین جدول می‌آید.
+              </div>
+              <q-input v-for="item in fields.appendix_items" :key="'a' + item.product_id" dense outlined autogrow
+                       class="q-mb-sm" v-model="item.description" :label="'توضیحات: ' + (item.title || '')"
+                       :readonly="isSigned"/>
+              <div v-if="!fields.appendix_items.length" class="text-caption text-grey">فاکتور این درخواست قلمی ندارد.</div>
+            </div>
+
             <div v-for="group in groups" :key="group.title" class="q-mb-md">
               <div class="text-subtitle2 text-primary q-mb-xs">{{ group.title }}</div>
               <div class="row q-col-gutter-sm">
@@ -89,7 +101,7 @@
             </div>
             <div class="text-caption text-grey-8">
               اطلاعات کارفرما، اقلام، مبلغ کل (به عدد و حروف)، پیش‌پرداخت، مانده و چک‌ها به‌صورت خودکار از اطلاعات مشتری و فاکتور این
-              درخواست خوانده می‌شود. برای تغییر آن‌ها از «اصلاحیه فاکتور» استفاده کنید.
+              درخواست خوانده می‌شود. برای تغییر آن‌ها از دکمه ویرایش در دیالوگ «فاکتور فروش» یا «قرارداد و پرداختی‌ها» استفاده کنید.
             </div>
           </q-card-section>
 
@@ -194,7 +206,11 @@ export default {
     },
     apply(data) {
       this.contract = data
-      this.fields = {...data.fields, tech_items: (data.fields.tech_items || []).map(i => ({...i}))}
+      this.fields = {
+        ...data.fields,
+        tech_items: (data.fields.tech_items || []).map(i => ({...i})),
+        appendix_items: (data.fields.appendix_items || []).map(i => ({...i})),
+      }
     },
     // آیتم دستی ماده ۳ (خارج از اقلام پیش فاکتور)
     addTechItem() {

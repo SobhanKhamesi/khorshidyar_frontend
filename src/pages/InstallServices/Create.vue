@@ -533,12 +533,9 @@ export default {
 
       this.selectedAutomationId = automation.id
       this.productDescription = automation.description || ''
-      // کالاهای فاکتور فروش (نه خدمات) به‌عنوان اقلام پیش‌نیاز پیشنهاد می‌شوند؛ قابل ویرایش است.
+      // اقلام پیش‌نیاز (اقلام مصرفی نصب مثل باتری و سیم) جدا از کالاهای فاکتور فروش هستند و دستی تعیین می‌شوند.
+      // قیمت خرید کالاهای فاکتور مستقیماً در سود و زیان پروژه کم می‌شود و
       // خدمات هزینه‌دار فاکتور (مثل حمل و نقل) در سمت سرور به هزینه‌های جانبی پروژه منتقل می‌شوند.
-      if (!this.requiredItems.some(i => i.product)) {
-        const goods = (automation.orders || []).filter(o => o.product && o.product.kind !== 2)
-        if (goods.length) this.requiredItems = goods.map(o => ({product: o.product, quantity: Number(o.count)}))
-      }
       // نشانی پروژه‌ی قید شده در قرارداد این فروش به‌صورت خودکار در آدرس نصب قرار می‌گیرد (قابل ویرایش)
       const projectAddress = automation.project_address || automation.address
       if (projectAddress) this.address = projectAddress

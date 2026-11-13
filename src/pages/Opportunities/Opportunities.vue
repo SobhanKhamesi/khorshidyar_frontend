@@ -183,7 +183,7 @@
                 {{ props.row.contact_number }}
               </q-td>
               <q-td key="lead_source" :props="props">
-                {{ props.row.source.title }}
+                {{ props.row.source ? props.row.source.title : '-' }}
               </q-td>
               <q-td key="category_title" :props="props">
                 {{ props.row.category !== null ? props.row.category.title : void 0 }}
@@ -328,7 +328,7 @@
                   {{ props.row.technical_expert ? props.row.technical_expert.name : '-' }}
                 </q-td>
                 <q-td key="action" :props="props" class="q-gutter-x-sm">
-                  <q-btn :href="'/v1/print_install_service/' + props.row.id" target="_blank" title="پرینت"
+                  <q-btn v-if="$access.can('installation.print')" :href="'/v1/print_install_service/' + props.row.id" target="_blank" title="پرینت"
                          dense round color="positive" icon="print"/>
                   <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                          :to="{ name:'InstallServiceEdit', params:{id:props.row.id} }"/>
@@ -471,7 +471,7 @@
                   {{ props.row.failure ? props.row.failure.title : '-' }}
                 </q-td>
                 <q-td key="action" :props="props" class="q-gutter-x-sm">
-                  <q-btn :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
+                  <q-btn v-if="$access.can('sales.print')" :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
                          color="positive" icon="print"/>
                   <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
                          :to="{ name:'EditAutomation', params:{id:props.row.id} }"/>
@@ -537,7 +537,7 @@
                   {{ props.row.jalali_date }}
                 </q-td>
                 <q-td key="action" :props="props" class="q-gutter-x-sm">
-                  <q-btn :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
+                  <q-btn v-if="$access.can('sales.print')" :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
                          color="positive" icon="print"/>
                   <q-btn title="بردن به صفحه پیش فاکتور برای بررسی / ثبت موفقیت" dense round color="yellow-9"
                          icon="edit" :to="{ name:'EditAutomation', params:{id:props.row.id} }"/>
@@ -809,9 +809,9 @@ export default {
       let payload = {};
       payload.id = this.itemFocusingId
 
-      // TODO: نام این روت را با روت واقعی حذف فرصت در بک‌اند خودتان تطبیق دهید
-      // (اگر فرصت‌ها همان رکورد سرنخ هستند، می‌توانید از 'customers/leads/destroy' استفاده کنید)
-      api.post('customers/opportunities/destroy', payload)
+      // فرصت همان رکورد سرنخ است، پس از روت حذف سرنخ استفاده می‌شود
+      // (روت customers/opportunities/destroy در بک‌اند وجود ندارد)
+      api.post('customers/leads/destroy', payload)
         .then(response => {
           this.$q.notify({
             type: 'positive',
@@ -819,6 +819,11 @@ export default {
             message: response.data.message
           })
           this.getOpportunityData();
+          this.deleteConfirmDialog = false;
+        })
+        .catch(() => {
+          // پیام خطا توسط interceptor نمایش داده می‌شود
+          this.loading = false;
           this.deleteConfirmDialog = false;
         });
     },

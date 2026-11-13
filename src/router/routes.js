@@ -118,6 +118,12 @@ const routes = [
                     name: 'CustomersOpportunities',
                     component: () => import('pages/Opportunities/Opportunities.vue')
                 },
+                // فرصت همان سرنخ است (فقط درخواست اتوماسیون دارد)، پس از همان فرم ویرایش سرنخ استفاده می‌شود
+                {
+                    path: '/opportunities/edit/:id',
+                    name: 'OpportunityEdit',
+                    component: () => import('pages/Leads/Edit.vue')
+                },
                 {
                     path: '/introducers',
                     name: 'introducerList',
