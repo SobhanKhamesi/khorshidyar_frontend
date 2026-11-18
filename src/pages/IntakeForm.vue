@@ -7,11 +7,11 @@
           <!-- ============ سربرگ ============ -->
           <header class="pc-header">
             <div class="pc-header__text">
-              <div class="pc-header__brand">خورشید یار یزد</div>
+              <div class="pc-header__brand">خورشیدیار یزد</div>
               <div class="pc-header__title">فرم درخواست بازدید و پیش‌قرارداد اولیه نیروگاه خورشیدی</div>
             </div>
             <div class="pc-header__logo">
-              <img v-if="!logoFailed" src="/khorshidyar-logo.png" alt="خورشید یار یزد" @error="logoFailed = true"/>
+              <img v-if="!logoFailed" src="/khorshidyar-logo.jpg" style="border-radius: 50%" alt="خورشیدیار یزد" @error="logoFailed = true"/>
               <q-icon v-else name="wb_sunny" size="56px" color="amber-6"/>
             </div>
           </header>
@@ -129,7 +129,7 @@
 
           <!-- ============ پاورقی ============ -->
           <footer class="pc-footer">
-            <div>خورشید یار یزد - مشاوره، طراحی، تأمین و اجرای نیروگاه‌های خورشیدی</div>
+            <div>خورشیدیار یزد - مشاوره، طراحی، تأمین و اجرای نیروگاه‌های خورشیدی</div>
             <div>شماره تماس: <span dir="ltr">۰۹۱۳۴۶۰۷۳۱۰</span></div>
           </footer>
         </div>

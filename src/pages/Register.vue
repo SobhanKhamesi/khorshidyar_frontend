@@ -25,18 +25,10 @@
 
           <!-- خوش آمدگویی -->
           <q-card-section v-else-if="step === -2" class="text-center q-pa-xl">
-            <q-icon name="wb_sunny" color="orange-8" size="4em"/>
+            <img src="/khorshidyar-logo.jpg" alt="خورشیدیار یزد" class="intake-logo"/>
             <div class="text-h5 text-weight-bold q-mt-md">ثبت نام نیروگاه خورشیدی</div>
             <div class="text-subtitle1 text-grey-8 q-mt-sm">راهکارهای هوشمند برای تامین انرژی مطمئن</div>
-            <q-btn class="q-mt-xl intake-btn" unelevated rounded label="شروع" @click="step = -1"/>
-          </q-card-section>
-
-          <!-- شرایط دریافت وام -->
-          <q-card-section v-else-if="step === -1" class="q-pa-lg">
-            <div class="intake-intro">{{ intro }}</div>
-            <div class="text-center q-mt-lg">
-              <q-btn class="intake-btn" unelevated rounded label="ادامه" @click="step = 0"/>
-            </div>
+            <q-btn class="q-mt-xl intake-btn" unelevated rounded label="شروع" @click="step = 0"/>
           </q-card-section>
 
           <!-- سوالات (هر صفحه یک سوال) -->
@@ -92,7 +84,7 @@
             </q-card-actions>
           </template>
 
-          <div class="text-center text-caption text-grey-6 q-pb-md">خورشیدیار</div>
+          <div class="text-center text-caption text-grey-6 q-pb-md">خورشیدیار یزد</div>
         </q-card>
 
       </q-page>
@@ -119,7 +111,6 @@ export default {
       errorMessage: '',
       successMessage: 'ثبت نام شما با موفقیت انجام شد. کارشناسان ما به‌زودی با شما تماس می‌گیرند.',
       isSubmitted: false,
-      intro: '',
       questions: [],
       answers: {},
       errors: {},
@@ -149,7 +140,6 @@ export default {
       api.get('register')
         .then(response => {
           const data = response.data.data
-          this.intro = data.intro
           this.questions = data.questions
           const answers = {}
           this.questions.forEach(q => {
@@ -191,7 +181,7 @@ export default {
       if (this.step < this.questions.length - 1) this.step++
     },
     prev() {
-      this.step = this.step > 0 ? this.step - 1 : -1
+      this.step = this.step > 0 ? this.step - 1 : -2
     },
     selectSingle(opt) {
       this.answers[this.current.key] = opt
@@ -262,9 +252,11 @@ export default {
   overflow: hidden;
 }
 
-.intake-intro {
-  white-space: pre-line;
-  line-height: 2;
+.intake-logo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .intake-btn {

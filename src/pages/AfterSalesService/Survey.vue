@@ -4,6 +4,10 @@
       <q-page class="q-pa-md flex flex-center bg-grey-2">
 
         <q-card flat class="border-radius-card survey-card">
+          <div class="text-center q-pt-lg">
+            <img src="/khorshidyar-logo.jpg" alt="خورشیدیار یزد" style="width: 88px; height: 88px; border-radius: 50%"/>
+            <div class="text-subtitle2 text-grey-8 q-mt-xs">خورشیدیار یزد</div>
+          </div>
 
           <!-- در حال بارگذاری -->
           <q-card-section v-if="loading" class="text-center q-pa-xl">

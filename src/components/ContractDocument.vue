@@ -1,8 +1,9 @@
 <template>
   <div class="contract-doc" dir="rtl">
     <header class="contract-header">
+      <img src="/khorshidyar-logo.jpg" alt="خورشیدیار یزد" style="float: left; width: 64px; height: 64px; border-radius: 50%; margin-right: 12px"/>
       <div class="contract-title">قرارداد خام طراحی، تأمین، نصب و راه‌اندازی نیروگاه خورشیدی</div>
-      <div class="contract-subtitle">شرکت خورشید یار یزد</div>
+      <div class="contract-subtitle">شرکت خورشیدیار یزد</div>
       <div class="contract-caption">نسخه حقوقی قابل تکمیل برای پروژه‌های خانگی، باغ، ویلا، تجاری، کشاورزی و صنعتی</div>
     </header>
 
@@ -164,7 +165,7 @@
         </div>
         <div class="sign-box">
           <div><b>امضای پیمانکار</b></div>
-          <div class="sign-empty">شرکت خورشید یار یزد</div>
+          <div class="sign-empty">شرکت خورشیدیار یزد</div>
           <div><b>نام و نام خانوادگی:</b> {{ contractorSigner }}</div>
           <div><b>مهر/اثر انگشت:</b></div>
         </div>
@@ -206,7 +207,7 @@
       </table>
     </section>
 
-    <footer class="contract-footer">خورشید یار یزد - مشاوره، طراحی، تأمین و اجرای نیروگاه‌های خورشیدی</footer>
+    <footer class="contract-footer">خورشیدیار یزد - مشاوره، طراحی، تأمین و اجرای نیروگاه‌های خورشیدی</footer>
   </div>
 </template>
 
@@ -216,7 +217,7 @@ import {installPrintPageFooter} from 'src/utils/printPageFooter'
 const PERSIAN = '۰۱۲۳۴۵۶۷۸۹'
 
 /**
- * متن کامل قرارداد (مطابق نمونه قرارداد خورشید یار یزد) که با داده قرارداد پر می‌شود.
+ * متن کامل قرارداد (مطابق نمونه قرارداد خورشیدیار یزد) که با داده قرارداد پر می‌شود.
  * data همان ساختاری است که بک‌اند در AutomationContract::buildData / snapshot برمی‌گرداند.
  * در پیش‌نمایش کارتابل، fields می‌تواند مقادیر در حال ویرایش را جایگزین کند.
  */
@@ -232,7 +233,7 @@ export default {
   },
   data() {
     return {
-      contractor: 'شرکت خورشید یار یزد / آقای حمیدرضا رضانژاد فهادان به کد ملی ۴۴۲۰۲۲۳۱۳۸',
+      contractor: 'شرکت خورشیدیار یزد / آقای حمیدرضا رضانژاد فهادان به کد ملی ۴۴۲۰۲۲۳۱۳۸',
       contractorSigner: 'حمیدرضا رضانژاد فهادان',
     }
   },
