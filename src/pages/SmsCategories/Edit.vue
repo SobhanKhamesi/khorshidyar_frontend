@@ -15,6 +15,13 @@
             <div class="col-12">
 
               <q-input outlined readonly v-model="titleSms" label="عنوان"/>
+              <!-- زمان ارسال این قالب (از بک‌اند) -->
+              <q-banner v-if="hint" dense rounded class="bg-orange-1 text-grey-9 q-mt-sm">
+                <template v-slot:avatar>
+                  <q-icon name="schedule_send" color="orange-8"/>
+                </template>
+                <b>زمان ارسال:</b> {{ hint }}
+              </q-banner>
 
             </div>
             <div class="col-12">
@@ -68,6 +75,7 @@ export default {
     return {
       titleSms: '',
       descriptionSms: '',
+      hint: '',
     }
   },
   computed: {
@@ -116,6 +124,7 @@ export default {
         .then(response => {
           this.titleSms = response.data.data.title
           this.descriptionSms = response.data.data.description
+          this.hint = response.data.data.hint || ''
           this.$q.loading.hide();
         })
         .catch(() => {

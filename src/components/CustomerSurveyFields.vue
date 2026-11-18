@@ -4,12 +4,13 @@
       <q-spinner color="primary" size="2em"/>
     </div>
     <div v-else class="row q-col-gutter-md">
-      <div v-for="q in questions" :key="q.key"
+      <div v-for="q in questions.filter(isVisible)" :key="q.key"
            :class="['textarea', 'single', 'multiple'].includes(q.type) && (q.options || []).length > 3 || q.type === 'textarea' ? 'col-12' : 'col-md-6 col-xs-12'">
 
         <q-input v-if="['text', 'national_code', 'digits', 'mobile', 'phone'].includes(q.type)"
                  outlined :dir="q.type === 'text' ? 'rtl' : 'ltr'"
-                 v-model="modelValue[q.key]" :label="q.label || q.title" :placeholder="q.placeholder"/>
+                 v-model="modelValue[q.key]" :label="q.label || q.title" :placeholder="q.placeholder"
+                 :hint="q.depends_on ? q.placeholder : undefined"/>
 
         <q-input v-else-if="q.type === 'number'"
                  outlined dir="ltr" type="number" :suffix="q.suffix"
@@ -68,6 +69,10 @@ export default {
       })
   },
   methods: {
+    // سوال وابسته (مثل ظرفیت کولر) فقط وقتی تعداد مربوطه بزرگتر از صفر است نمایش داده می‌شود
+    isVisible(q) {
+      return !q.depends_on || Number(this.modelValue[q.depends_on]) > 0
+    },
     // همه کلیدها در آبجکت وجود داشته باشند تا واکنش‌گرا باشند
     ensureKeys() {
       this.questions.forEach(q => {

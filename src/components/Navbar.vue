@@ -230,6 +230,10 @@
         <q-item-section>
           <span>سرویس نصب</span>
         </q-item-section>
+        <q-item-section side v-if="installation_survey_count > 0">
+          <q-icon name="rate_review" color="accent" size="20px"
+                  :title="installation_survey_count + ' نظرسنجی تکمیل پروژه‌ی جدید ثبت شده'"/>
+        </q-item-section>
         <q-item-section side v-if="check_installation_service_count">
           <span class="blink-me">{{ installation_service_count }}</span>
         </q-item-section>
@@ -239,6 +243,10 @@
       </q-item>
       <q-item v-ripple clickable :to="{ name: 'InstallServiceList' }">
         <q-item-section>لیست سرویس ها</q-item-section>
+        <q-item-section side v-if="installation_survey_count > 0">
+          <q-icon name="rate_review" color="accent" size="20px"
+                  :title="installation_survey_count + ' نظرسنجی تکمیل پروژه‌ی جدید ثبت شده'"/>
+        </q-item-section>
         <q-item-section side v-if="check_installation_service_count">
           <span class="blink-me">{{ installation_service_count }}</span>
         </q-item-section>
@@ -451,6 +459,7 @@ export default defineComponent({
       contract_signed_count: 0,
       // نظرسنجی‌های ضعیف خدمات پس از فروش که هنوز بررسی نشده‌اند
       poor_rating_count: 0,
+      installation_survey_count: 0,
       // تعداد آیتم‌های زنگوله منوی بالا (null: هنوز دریافت نشده)
       notifications_count: null,
       check_sum_count: false,
@@ -495,6 +504,8 @@ export default defineComponent({
             this.contract_signed_count = response.data.data.contract_signed_count || 0
             // نظرسنجی‌های ضعیف (امتیاز ۰ تا ۲) که دلیل نارضایتی‌شان هنوز بررسی نشده
             this.poor_rating_count = response.data.data.poor_rating_count || 0
+            // نظرسنجی‌های تکمیل پروژه‌ی سرویس نصب که ثبت شده و هنوز دیده نشده‌اند
+            this.installation_survey_count = response.data.data.installation_survey_count || 0
             this.check_installation_service_count = this.installation_service_count > 0;
 
             // اعلان‌ها (فرم اولیه تکمیل شده، قرارداد امضا شده، نظرسنجی ضعیف و ...) در بک‌اند به‌صورت یادآوری ساخته می‌شوند

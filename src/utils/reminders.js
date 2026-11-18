@@ -7,6 +7,7 @@ export const REMINDER_TYPES = {
   CONTRACT_SIGNED: 3,
   POOR_RATING: 4,
   LEAD_REGISTERED: 5,
+  INSTALLATION_SURVEY: 6,
 }
 
 const META = {
@@ -27,6 +28,10 @@ const META = {
   [REMINDER_TYPES.LEAD_REGISTERED]: {
     label: 'ثبت نام آنلاین', icon: 'person_add', color: 'deep-orange',
     route: {name: 'LeadsList'}
+  },
+  [REMINDER_TYPES.INSTALLATION_SURVEY]: {
+    label: 'نظرسنجی تکمیل پروژه', icon: 'rate_review', color: 'accent',
+    route: {name: 'InstallServiceList'}
   },
 }
 

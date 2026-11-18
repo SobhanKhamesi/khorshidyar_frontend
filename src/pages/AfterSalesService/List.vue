@@ -15,7 +15,7 @@
             <span>نظرسنجی ضعیف، نیازمند بررسی دلیل نارضایتی</span>
           </div>
         </div>
-        <q-table :loading="loading" flat bordered class="border-radius-table" :rows="filteredRows" :filter="filter"
+        <q-table :loading="loading" flat bordered class="border-radius-table compact-table" :rows="filteredRows" :filter="filter"
                  :columns="columns" :rows-per-page-options="[10]">
           <template v-slot:loading>
             <q-inner-loading showing color="primary"/>
@@ -75,17 +75,38 @@
                 </template>
                 <span v-else>-</span>
               </q-td>
-              <q-td key="action" :props="props" class="q-gutter-x-sm">
-                <q-btn @click.prevent="showDetails(props.row.id)" title="مشخصات بیشتر" dense round color="brown"
-                       icon="info"/>
-                <q-btn v-if="isOpen(props.row)" @click.prevent="openCompleteDialog(props.row.id)" title="تکمیل کردن"
-                       dense round color="positive" icon="check"/>
-                <q-btn v-if="getSubmittedRating(props.row)" @click.prevent="showRatingDialog(props.row)"
-                       title="نظرسنجی مشتری" dense round color="deep-purple" icon="star"/>
-                <q-btn v-if="$access.can('after_sales.manage')" title="ویرایش" dense round color="yellow-9" icon="edit"
-                       :to="{ name:'AfterSalesServiceEdit', params:{id:props.row.id} }"/>
-                <q-btn v-if="$access.can('after_sales.manage')" title="حذف" dense round color="negative" icon="delete"
-                       @click.prevent="deleteConfirmation(props.row.id)"/>
+              <q-td key="action" :props="props" class="action-cell">
+                <div class="row no-wrap justify-center items-center q-gutter-x-xs">
+                  <q-btn @click.prevent="showDetails(props.row.id)" dense round color="brown" icon="info">
+                    <q-tooltip>مشخصات بیشتر</q-tooltip>
+                  </q-btn>
+                  <q-btn v-if="isOpen(props.row)" @click.prevent="openCompleteDialog(props.row.id)"
+                         dense round color="positive" icon="check">
+                    <q-tooltip>تکمیل کردن</q-tooltip>
+                  </q-btn>
+                  <q-btn v-if="getSubmittedRating(props.row)" @click.prevent="showRatingDialog(props.row)"
+                         dense round color="deep-purple" icon="star">
+                    <q-tooltip>نظرسنجی مشتری</q-tooltip>
+                  </q-btn>
+
+                  <!-- ویرایش و حذف در منو تا ستون عملیات جمع و جور بماند -->
+                  <q-btn v-if="$access.can('after_sales.manage')" dense round flat color="grey-8" icon="more_vert">
+                    <q-tooltip>عملیات بیشتر</q-tooltip>
+                    <q-menu auto-close>
+                      <q-list dense style="min-width: 180px">
+                        <q-item clickable :to="{ name:'AfterSalesServiceEdit', params:{id:props.row.id} }">
+                          <q-item-section avatar><q-icon name="edit" color="yellow-9"/></q-item-section>
+                          <q-item-section>ویرایش</q-item-section>
+                        </q-item>
+                        <q-separator/>
+                        <q-item clickable @click="deleteConfirmation(props.row.id)">
+                          <q-item-section avatar><q-icon name="delete" color="negative"/></q-item-section>
+                          <q-item-section class="text-negative">حذف</q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                  </q-btn>
+                </div>
               </q-td>
             </q-tr>
           </template>

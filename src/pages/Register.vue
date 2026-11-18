@@ -87,6 +87,20 @@
           <div class="text-center text-caption text-grey-6 q-pb-md">خورشیدیار یزد</div>
         </q-card>
 
+        <!-- هشدار شماره تکراری -->
+        <q-dialog v-model="duplicateDialog" persistent>
+          <q-card class="duplicate-card text-center q-pa-md">
+            <q-card-section>
+              <q-icon name="warning_amber" color="orange-8" size="3.5em"/>
+              <div class="text-h6 q-mt-sm">شماره تکراری</div>
+              <div class="text-grey-8 q-mt-sm">{{ duplicateMessage }}</div>
+            </q-card-section>
+            <q-card-actions align="center">
+              <q-btn class="intake-btn" unelevated rounded label="متوجه شدم" v-close-popup/>
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+
       </q-page>
     </q-page-container>
   </q-layout>
@@ -115,6 +129,8 @@ export default {
       answers: {},
       errors: {},
       step: -2,
+      duplicateDialog: false,
+      duplicateMessage: '',
     }
   },
   computed: {
@@ -214,7 +230,11 @@ export default {
         })
         .catch(error => {
           const errors = error.response?.data?.errors
-          if (errors) {
+          if (error.response?.data?.duplicate) {
+            // شماره قبلاً ثبت شده؛ چیزی ساخته نشده و فقط به کاربر اطلاع داده می‌شود
+            this.duplicateMessage = error.response.data.message
+            this.duplicateDialog = true
+          } else if (errors) {
             // نمایش اولین سوال دارای خطا
             const mapped = {}
             Object.keys(errors).forEach(k => {
@@ -263,6 +283,12 @@ export default {
   background: #ff9900;
   color: #fff;
   min-width: 120px;
+}
+
+.duplicate-card {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 16px;
 }
 
 .intake-option {

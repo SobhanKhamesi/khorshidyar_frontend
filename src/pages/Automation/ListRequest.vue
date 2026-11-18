@@ -10,7 +10,7 @@
       <q-card-section>
         <q-table
           :loading="loading"
-          flat bordered class="border-radius-table"
+          flat bordered class="border-radius-table compact-table"
           :rows="rows"
           :filter="filter"
           :columns="columns"
@@ -66,21 +66,6 @@
                           name="notifications_active" color="negative" size="18px" class="q-ml-xs" title="فرم جدید، هنوز بررسی نشده"/>
                 </div>
               </q-td>
-              <q-td key="referrer_percent" :props="props">
-                <template v-if="props.row.customer && props.row.customer.referrer_id">
-                  <referrer-percent-edit
-                    v-model="props.row.referrer_percent"
-                    endpoint="automation/referrer-percent"
-                    :payload="{ id: props.row.id }"
-                    hint="فقط برای همین پروژه اعمال می‌شود"
-                    @saved="data => props.row.referrer_income = data.referrer_income"
-                  />
-                  <div v-if="props.row.referrer_income" class="text-caption text-positive">
-                    {{ Number(props.row.referrer_income).toLocaleString('en-US') }} تومان
-                  </div>
-                </template>
-                <span v-else>-</span>
-              </q-td>
               <q-td key="survey_type" :props="props">
                 <q-badge v-if="props.row.survey_type" :color="surveyTypeColor(props.row.survey_type)">
                   {{ surveyTypeLabel(props.row.survey_type) }}
@@ -99,25 +84,37 @@
 
                 <q-badge v-else label="در انتظار بررسی حسابداری" color="orange"/>
               </q-td>
-              <q-td key="action" :props="props" class="q-gutter-x-sm">
-                <q-btn
-                  @click.prevent="showSurveyForm(props.row.id)"
-                  title="نمایش فرم بازدید" dense round color="brown" icon="assignment"/>
-                <q-btn
-                  @click.prevent="showComments(props.row.id)"
-                  title="کامنت ها" dense round color="blue" icon="forum">
-                  <q-badge v-if="props.row.commentsCount > 0" color="negative" style="font-size: 18px;" floating>
-                    {{ props.row.commentsCount }}
-                  </q-badge>
-                </q-btn>
+              <q-td key="action" :props="props" class="action-cell">
+                <div class="row no-wrap justify-center items-center q-gutter-x-xs">
+                  <q-btn @click.prevent="showSurveyForm(props.row.id)" dense round color="brown" icon="assignment">
+                    <q-tooltip>نمایش فرم بازدید</q-tooltip>
+                  </q-btn>
+                  <q-btn @click.prevent="showComments(props.row.id)" dense round color="blue" icon="forum">
+                    <q-tooltip>کامنت ها</q-tooltip>
+                    <q-badge v-if="props.row.commentsCount > 0" color="negative" floating>
+                      {{ props.row.commentsCount }}
+                    </q-badge>
+                  </q-btn>
 
-                <!--                <q-btn :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round-->
-                <!--                       color="positive" icon="print"/>-->
-                <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
-                       :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
-                <!-- «حذف» در اتوماسیون یعنی تبدیل به فروش ناموفق (برای صاحب اتوماسیون مجاز است) -->
-                <q-btn title="تبدیل به فروش ناموفق" dense round color="negative" icon="delete"
-                       @click.prevent="deleteConfirmation(props.row.id)"/>
+                  <!-- سایر عملیات در منو تا ستون عملیات جمع و جور بماند -->
+                  <q-btn dense round flat color="grey-8" icon="more_vert">
+                    <q-tooltip>عملیات بیشتر</q-tooltip>
+                    <q-menu auto-close>
+                      <q-list dense style="min-width: 200px">
+                        <q-item clickable :to="{ name:'EditAutomation',params:{id:props.row.id} }">
+                          <q-item-section avatar><q-icon name="edit" color="yellow-9"/></q-item-section>
+                          <q-item-section>ویرایش</q-item-section>
+                        </q-item>
+                        <q-separator/>
+                        <!-- «حذف» در اتوماسیون یعنی تبدیل به فروش ناموفق (برای صاحب اتوماسیون مجاز است) -->
+                        <q-item clickable @click="deleteConfirmation(props.row.id)">
+                          <q-item-section avatar><q-icon name="delete" color="negative"/></q-item-section>
+                          <q-item-section class="text-negative">تبدیل به فروش ناموفق</q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                  </q-btn>
+                </div>
               </q-td>
             </q-tr>
           </template>
@@ -571,7 +568,6 @@ import SurveyViewDialog from "components/SurveyViewDialog.vue";
 import IntakeFormDialog from "components/IntakeFormDialog.vue";
 import PreInvoiceItemsDialog from "components/PreInvoiceItemsDialog.vue";
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
-import ReferrerPercentEdit from "components/ReferrerPercentEdit.vue";
 
 function wrapCsvValue(val, formatFn) {
   let formatted = formatFn !== void 0
@@ -597,7 +593,7 @@ function emptyInvoiceItem() {
 
 export default {
   name: "ListRequest",
-  components: {ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog, IntakeFormDialog},
+  components: {CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog, IntakeFormDialog},
   directives: {money: VMoney},
   data() {
     return {
@@ -673,7 +669,6 @@ export default {
       columns: [
         {name: 'sabtKonande', align: 'center', label: 'ثبت شده توسط'},
         {name: 'customer_name', field: 'customer_name', align: 'center', label: 'مشتری'},
-        {name: 'referrer_percent', field: 'referrer_percent', align: 'center', label: 'درصد معرف'},
         {name: 'survey_type', field: 'survey_type', align: 'center', label: 'نوع کارشناسی'},
         {name: 'date', field: 'date', align: 'center', label: 'تاریخ', sortable: true},
         {name: 'vazieat', field: 'vazieat', align: 'center', label: 'وضعیت'},

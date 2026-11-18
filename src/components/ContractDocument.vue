@@ -165,9 +165,10 @@
         </div>
         <div class="sign-box">
           <div><b>امضای پیمانکار</b></div>
-          <div class="sign-empty">شرکت خورشیدیار یزد</div>
+          <img src="../assets/img/contractor-signature.png" alt="امضای پیمانکار" class="sign-img"/>
           <div><b>نام و نام خانوادگی:</b> {{ contractorSigner }}</div>
           <div><b>مهر/اثر انگشت:</b></div>
+          <img src="../assets/img/contractor-stamp.png" alt="مهر شرکت خورشیدیار یزد" class="stamp-img"/>
         </div>
       </div>
     </section>
@@ -198,10 +199,10 @@
         </tbody>
       </table>
       <table v-if="payments.length" class="doc-table q-mt-sm">
-        <thead><tr><th>ردیف</th><th>روش پرداخت</th><th>تاریخ</th><th>مبلغ (تومان)</th></tr></thead>
+        <thead><tr><th>ردیف</th><th>روش پرداخت</th><th>واریز به حساب</th><th>تاریخ</th><th>مبلغ (تومان)</th></tr></thead>
         <tbody>
         <tr v-for="(p, i) in payments" :key="'p' + i">
-          <td>{{ num(i + 1) }}</td><td>{{ v(p.method) }}</td><td>{{ v(num(p.date)) }}</td><td>{{ money(p.amount) }}</td>
+          <td>{{ num(i + 1) }}</td><td>{{ v(p.method) }}</td><td>{{ v(p.deposit_account) }}</td><td>{{ v(num(p.date)) }}</td><td>{{ money(p.amount) }}</td>
         </tr>
         </tbody>
       </table>
@@ -364,6 +365,13 @@ ul {
 .sign-img {
   max-width: 220px;
   max-height: 110px;
+  display: block;
+  margin: 4px 0;
+}
+
+.stamp-img {
+  width: 130px;
+  height: auto;
   display: block;
   margin: 4px 0;
 }

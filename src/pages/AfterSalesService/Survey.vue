@@ -41,6 +41,11 @@
               </div>
             </div>
 
+            <div v-if="isInstallation && submittedCompleted !== null" class="q-mt-md">
+              نصب در تاریخ <span dir="ltr">{{ installationDate }}</span> تکمیل شده است:
+              <q-badge :color="submittedCompleted ? 'positive' : 'negative'" :label="submittedCompleted ? 'بله' : 'خیر'"/>
+            </div>
+
             <div v-if="submittedFeedback" class="q-mt-md text-right">
               <div class="text-caption text-grey-7">بازخورد شما:</div>
               <div class="text-body2">{{ submittedFeedback }}</div>
@@ -50,9 +55,9 @@
           <!-- فرم نظرسنجی -->
           <template v-else>
             <q-card-section>
-              <div class="text-h6 text-center">نظرسنجی خدمات پس از فروش</div>
+              <div class="text-h6 text-center">{{ isInstallation ? 'نظرسنجی تکمیل پروژه' : 'نظرسنجی خدمات پس از فروش' }}</div>
               <div class="text-caption text-grey-7 text-center q-mt-xs">
-                لطفاً میزان رضایت خود را از خدمات پس از فروش ارزیابی کنید
+                لطفاً میزان رضایت خود را از {{ isInstallation ? 'نصب نیروگاه خورشیدی' : 'خدمات پس از فروش' }} ارزیابی کنید
               </div>
             </q-card-section>
 
@@ -68,12 +73,32 @@
                   <q-item-section side><q-icon name="build"/></q-item-section>
                   <q-item-section>نوع خدمت: {{ serviceInfo.service_type }}</q-item-section>
                 </q-item>
+                <q-item v-if="serviceInfo.address">
+                  <q-item-section side><q-icon name="place"/></q-item-section>
+                  <q-item-section>{{ serviceInfo.address }}</q-item-section>
+                </q-item>
                 <q-item v-if="serviceInfo.problem">
                   <q-item-section side><q-icon name="report_problem"/></q-item-section>
                   <q-item-section>{{ serviceInfo.problem }}</q-item-section>
                 </q-item>
               </q-list>
             </q-card-section>
+
+            <template v-if="isInstallation">
+              <q-separator/>
+              <q-card-section class="text-center">
+                <div class="text-subtitle1 text-weight-medium q-mb-md">
+                  آیا نصب شما در تاریخ <span dir="ltr" class="text-weight-bold">{{ installationDate || '-' }}</span> تکمیل شده است؟
+                </div>
+                <q-btn-toggle
+                    v-model="isCompleted"
+                    spread rounded unelevated no-caps
+                    toggle-color="accent" color="grey-3" text-color="grey-9"
+                    :options="[{label: 'بله', value: true}, {label: 'خیر', value: false}]"
+                    style="max-width: 260px; margin: 0 auto"
+                />
+              </q-card-section>
+            </template>
 
             <q-separator/>
 
@@ -154,6 +179,9 @@ export default {
       submittedFeedback: '',
 
       serviceInfo: null,
+      installationDate: '',
+      isCompleted: null,
+      submittedCompleted: null,
 
       rating: null,
       feedback: '',
@@ -165,6 +193,13 @@ export default {
   computed: {
     token() {
       return this.$route.params.token
+    },
+    // همین صفحه برای نظرسنجی تکمیل پروژه‌ی سرویس نصب هم استفاده می‌شود (مسیر /installation-survey)
+    isInstallation() {
+      return this.$route.meta.surveyKind === 'installation'
+    },
+    apiPath() {
+      return (this.isInstallation ? 'installation-survey/' : 'survey/') + this.token
     },
     fillPercent() {
       if (this.rating === null) return 0
@@ -178,16 +213,18 @@ export default {
   methods: {
     fetchSurvey() {
       this.loading = true
-      api.get(`survey/${this.token}`)
+      api.get(this.apiPath)
           .then(response => {
             const data = response.data.data
 
             this.serviceInfo = data.service
+            this.installationDate = data.installation_date || ''
 
             if (data.is_submitted) {
               this.isSubmitted = true
               this.submittedRating = Number(data.rating) || 0
               this.submittedFeedback = data.feedback || ''
+              this.submittedCompleted = data.is_completed ?? null
             }
           })
           .catch(error => {
@@ -229,6 +266,11 @@ export default {
     },
 
     submitSurvey() {
+      if (this.isInstallation && this.isCompleted === null) {
+        this.$q.notify({type: 'negative', position: 'bottom', message: 'لطفاً مشخص کنید نصب در تاریخ ذکر شده تکمیل شده است یا خیر'})
+        return
+      }
+
       if (this.rating === null) {
         this.$q.notify({type: 'negative', position: 'bottom', message: 'لطفاً امتیاز خود را با انتخاب روی ستاره‌ها مشخص کنید'})
         return
@@ -236,8 +278,9 @@ export default {
 
       this.submitting = true
 
-      api.post(`survey/${this.token}`, {
+      api.post(this.apiPath, {
         rating: this.rating,
+        ...(this.isInstallation ? {is_completed: this.isCompleted} : {}),
         feedback: this.feedback,
       })
           .then(response => {
@@ -252,6 +295,7 @@ export default {
             this.isSubmitted = true
             this.submittedRating = Number(data.rating) || this.rating
             this.submittedFeedback = data.feedback || this.feedback
+            this.submittedCompleted = data.is_completed ?? this.isCompleted
           })
           .catch(error => {
             const message = error?.response?.data?.message || 'خطایی رخ داده است، دوباره تلاش کنید'

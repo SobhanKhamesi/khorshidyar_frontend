@@ -24,13 +24,16 @@
           <div>
             <div class="text-subtitle2 q-mb-sm">پرداختی ها</div>
             <div v-for="(p, index) in editPayments" :key="p.uid" class="row q-col-gutter-sm items-center q-mb-xs">
-              <div class="col-md-3 col-xs-12">
+              <div class="col-md-2 col-xs-12">
                 <q-select dense outlined v-model="p.method" label="نوع پرداخت" :options="['نقدی', 'کارتخوان', 'واریز به حساب']"/>
               </div>
-              <div class="col-md-4 col-xs-6">
+              <div class="col-md-3 col-xs-6">
                 <q-input dense outlined type="number" dir="ltr" suffix="تومان" v-model.number="p.amount" label="مبلغ"/>
               </div>
-              <div class="col-md-4 col-xs-6">
+              <div class="col-md-3 col-xs-6">
+                <q-input dense outlined v-model="p.deposit_account" label="واریز به حساب"/>
+              </div>
+              <div class="col-md-3 col-xs-12">
                 <q-input dense outlined dir="ltr" mask="####/##/##" v-model="p.date" label="تاریخ پرداخت">
                   <template v-slot:prepend>
                     <q-icon name="event" class="cursor-pointer">
@@ -108,6 +111,7 @@
               <tr>
                 <th class="text-center">نوع پرداخت</th>
                 <th class="text-center">مبلغ</th>
+                <th class="text-center">واریز به حساب</th>
                 <th class="text-center">تاریخ</th>
               </tr>
               </thead>
@@ -115,6 +119,7 @@
               <tr v-for="(p, i) in payments" :key="i">
                 <td class="text-center">{{ p.method }}</td>
                 <td class="text-center">{{ moneyFormat(p.amount) }}</td>
+                <td class="text-center">{{ p.deposit_account || '-' }}</td>
                 <td class="text-center">{{ p.jalali_date || p.date }}</td>
               </tr>
               </tbody>
@@ -204,7 +209,7 @@ export default {
       return (("" + digits).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"))
     },
     emptyPayment() {
-      return {uid: ++uid, method: null, amount: null, date: ''}
+      return {uid: ++uid, method: null, amount: null, deposit_account: '', date: ''}
     },
     emptyCheque() {
       return {uid: ++uid, number: '', bank_name: '', amount: null, due_date: ''}
@@ -228,7 +233,7 @@ export default {
           })
     },
     startEdit() {
-      this.editPayments = this.payments.map(p => ({uid: ++uid, method: p.method, amount: Number(p.amount), date: p.jalali_date || ''}))
+      this.editPayments = this.payments.map(p => ({uid: ++uid, method: p.method, amount: Number(p.amount), deposit_account: p.deposit_account || '', date: p.jalali_date || ''}))
       this.editCheques = this.cheques.map(c => ({
         uid: ++uid, number: c.number || '', bank_name: c.bank_name || '', amount: Number(c.amount), due_date: c.jalali_due_date || ''
       }))
@@ -240,7 +245,7 @@ export default {
       // فقط پرداختی‌ها و چک‌ها ارسال می‌شود؛ اقلام و مبلغ نهایی دست نمی‌خورند
       api.post('automation/amend', {
         id: this.automationId,
-        payments: this.editPayments.filter(p => p.amount).map(p => ({method: p.method, amount: p.amount, date: p.date || null})),
+        payments: this.editPayments.filter(p => p.amount).map(p => ({method: p.method, amount: p.amount, deposit_account: p.deposit_account || null, date: p.date || null})),
         cheques: this.editCheques.filter(c => c.amount).map(c => ({
           number: c.number, bank_name: c.bank_name, amount: c.amount, due_date: c.due_date || null
         })),

@@ -23,7 +23,7 @@
         </div>
         <q-table
             :loading="loading"
-            flat bordered class="border-radius-table"
+            flat bordered wrap-cells class="border-radius-table install-table"
             :rows="filteredRows"
             :filter="filter"
             :columns="columns"
@@ -61,7 +61,7 @@
 
           <template v-slot:body="props">
             <q-tr :props="props" :class="isUrgentInstallation(props.row) ? 'row-urgent-installation' : ''">
-              <q-td key="customer_name" :props="props">
+              <q-td key="customer_name" :props="props" class="customer-cell">
                 {{ props.row.customer ? props.row.customer.fullName : '-' }}
               </q-td>
 
@@ -82,7 +82,7 @@
               </q-td>
 
               <q-td key="installers" :props="props">
-                <div class="q-gutter-xs">
+                <div class="column items-center q-gutter-y-xs installer-badges">
                   <q-badge
                       v-for="role in rolesOf(props.row)"
                       :key="role.key"
@@ -110,37 +110,86 @@
                 </div>
               </q-td>
 
-              <q-td key="action" :props="props" class="q-gutter-x-sm">
-                <!-- اقدام بعدی گردش کار -->
-                <q-btn
-                    v-if="nextAction(props.row)"
-                    rounded dense no-caps
-                    class="q-px-sm"
-                    :color="nextAction(props.row).color"
-                    :icon="nextAction(props.row).icon"
-                    :label="nextAction(props.row).label"
-                    @click.prevent="openWorkflow(props.row, nextAction(props.row).mode)"/>
-
-                <q-btn
-                    @click.prevent="showDetails(props.row.id)"
-                    title="مشخصات و تاریخچه" dense round color="brown" icon="info"/>
-                <q-btn
-                    @click.prevent="showConsumables(props.row)"
-                    title="اقلام پیش‌نیاز و مصرفی" dense round color="teal" icon="inventory_2"/>
-
-                <q-btn v-if="canSeeProfit" @click.prevent="openFinance(props.row)"
-                       title="سود و زیان پروژه (اقلام، دستمزد، هزینه‌های جانبی)" dense round color="deep-purple" icon="calculate"/>
-
-                <q-btn v-if="$access.can('installation.print')" :href="'/v1/print_install_service/' + props.row.id" target="_blank" title="پرینت" dense round
-                       color="positive" icon="print"/>
-
-                <!-- ویرایش و حذف سرویس نصب با دسترسی مدیریت سرویس نصب -->
-                <template v-if="canManage">
-                  <q-btn v-if="props.row.stage !== STAGE.COMPLETED" title="ویرایش" dense round color="yellow-9" icon="edit"
-                         :to="{ name:'InstallServiceEdit', params:{id:props.row.id} }"/>
-                  <q-btn title="حذف" dense round color="negative" icon="delete"
-                         @click.prevent="deleteConfirmation(props.row.id)"/>
+              <!-- نظرسنجی تکمیل پروژه (پس از تکمیل نهایی برای مشتری پیامک می‌شود) -->
+              <q-td key="survey" :props="props">
+                <template v-if="props.row.stage !== STAGE.COMPLETED">-</template>
+                <template v-else-if="props.row.survey && props.row.survey.is_submitted">
+                  <div class="cursor-pointer" @click.prevent="openSurvey(props.row)">
+                    <q-badge :color="props.row.survey.is_completed ? 'positive' : 'negative'"
+                             :label="'تکمیل نصب: ' + (props.row.survey.is_completed ? 'بله' : 'خیر')"/>
+                    <!-- نظرسنجی جدیدی که هنوز دیده نشده (یادآوری و علامت منو با مشاهده برطرف می‌شود) -->
+                    <q-badge v-if="!props.row.survey.seen_at" color="red" class="q-ml-xs" label="جدید"/>
+                    <div class="text-caption q-mt-xs">
+                      <q-icon name="star" color="amber-7"/> {{ Number(props.row.survey.rating).toFixed(1) }} از ۵
+                    </div>
+                    <q-tooltip>مشاهده‌ی نتیجه‌ی نظرسنجی</q-tooltip>
+                  </div>
                 </template>
+                <template v-else>
+                  <div class="text-caption text-grey-7">
+                    {{ props.row.survey && props.row.survey.sms_sent_at ? 'در انتظار پاسخ مشتری' : 'ارسال نشده' }}
+                  </div>
+                  <q-btn v-if="canManage" flat dense no-caps size="sm" color="accent" icon="send"
+                         :label="props.row.survey && props.row.survey.sms_sent_at ? 'ارسال مجدد لینک' : 'ارسال لینک'"
+                         :loading="sendingSurveyId === props.row.id"
+                         @click.prevent="sendSurvey(props.row)"/>
+                </template>
+              </q-td>
+
+              <q-td key="action" :props="props" class="action-cell">
+                <div class="column items-center q-gutter-y-xs">
+                  <!-- اقدام بعدی گردش کار -->
+                  <q-btn
+                      v-if="nextAction(props.row)"
+                      rounded unelevated dense no-caps size="md"
+                      class="q-px-sm"
+                      :color="nextAction(props.row).color"
+                      :icon="nextAction(props.row).icon"
+                      :label="nextAction(props.row).label"
+                      @click.prevent="openWorkflow(props.row, nextAction(props.row).mode)"/>
+
+                  <div class="row no-wrap justify-center q-gutter-x-xs">
+                    <q-btn @click.prevent="showDetails(props.row.id)"
+                           dense round size="md" color="brown" icon="info">
+                      <q-tooltip>مشخصات و تاریخچه</q-tooltip>
+                    </q-btn>
+                    <q-btn @click.prevent="showConsumables(props.row)"
+                           dense round size="md" color="teal" icon="inventory_2">
+                      <q-tooltip>اقلام پیش‌نیاز و مصرفی</q-tooltip>
+                    </q-btn>
+
+                    <!-- سایر عملیات (سود و زیان، پرینت، ویرایش، حذف) در منو تا ستون عملیات جمع و جور بماند -->
+                    <q-btn v-if="hasMoreActions(props.row)" dense round flat size="md" color="grey-8" icon="more_vert">
+                      <q-tooltip>عملیات بیشتر</q-tooltip>
+                      <q-menu auto-close>
+                        <q-list dense style="min-width: 190px">
+                          <q-item v-if="canSeeProfit" clickable @click="openFinance(props.row)">
+                            <q-item-section avatar><q-icon name="calculate" color="deep-purple"/></q-item-section>
+                            <q-item-section>سود و زیان پروژه</q-item-section>
+                          </q-item>
+                          <q-item v-if="$access.can('installation.print')" clickable tag="a"
+                                  :href="'/v1/print_install_service/' + props.row.id" target="_blank">
+                            <q-item-section avatar><q-icon name="print" color="positive"/></q-item-section>
+                            <q-item-section>پرینت</q-item-section>
+                          </q-item>
+                          <!-- ویرایش و حذف سرویس نصب با دسترسی مدیریت سرویس نصب -->
+                          <template v-if="canManage">
+                            <q-item v-if="props.row.stage !== STAGE.COMPLETED" clickable
+                                    :to="{ name:'InstallServiceEdit', params:{id:props.row.id} }">
+                              <q-item-section avatar><q-icon name="edit" color="yellow-9"/></q-item-section>
+                              <q-item-section>ویرایش</q-item-section>
+                            </q-item>
+                            <q-separator/>
+                            <q-item clickable @click="deleteConfirmation(props.row.id)">
+                              <q-item-section avatar><q-icon name="delete" color="negative"/></q-item-section>
+                              <q-item-section class="text-negative">حذف</q-item-section>
+                            </q-item>
+                          </template>
+                        </q-list>
+                      </q-menu>
+                    </q-btn>
+                  </div>
+                </div>
               </q-td>
             </q-tr>
           </template>
@@ -150,6 +199,32 @@
     </q-card>
 
     <project-finance-dialog v-model="financeDlg" :service-id="financeServiceId" @changed="onFinanceChanged"/>
+
+    <!-- نتیجه‌ی نظرسنجی تکمیل پروژه -->
+    <q-dialog v-model="surveyDlg">
+      <q-card v-if="surveyRow && surveyRow.survey" style="width: 460px; max-width: 95vw">
+        <q-card-section class="row items-center">
+          <div class="text-h6">نظرسنجی تکمیل پروژه</div>
+          <q-space/>
+          <q-btn icon="close" flat round dense v-close-popup/>
+        </q-card-section>
+        <q-separator/>
+        <q-card-section class="q-gutter-y-sm">
+          <div>مشتری: <b>{{ surveyRow.customer ? surveyRow.customer.fullName : '-' }}</b></div>
+          <div>
+            نصب در تاریخ <b dir="ltr">{{ surveyRow.survey.jalali_installation_date || '-' }}</b> تکمیل شده است؟
+            <q-badge :color="surveyRow.survey.is_completed ? 'positive' : 'negative'"
+                     :label="surveyRow.survey.is_completed ? 'بله' : 'خیر'"/>
+          </div>
+          <div>
+            امتیاز: <q-icon name="star" color="amber-7"/>
+            <b>{{ Number(surveyRow.survey.rating).toFixed(1) }}</b> از ۵
+          </div>
+          <div>نظر مشتری: {{ surveyRow.survey.feedback || '-' }}</div>
+          <div class="text-caption text-grey-7">زمان ثبت: {{ surveyRow.survey.jalali_submitted_at || '-' }}</div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
 
     <q-dialog v-model="deleteConfirmDialog">
       <q-card>
@@ -378,8 +453,12 @@ export default {
         {name: 'stage', field: 'stage_label', align: 'center', label: 'مرحله'},
         {name: 'installers', field: 'installers', align: 'center', label: 'نصاب ها'},
         {name: 'final_profit', field: 'final_profit', align: 'center', label: 'سود نهایی (تومان)', sortable: true},
+        {name: 'survey', field: 'survey', align: 'center', label: 'نظرسنجی'},
         {name: 'action', field: 'action', align: 'center', label: 'عملیات'}
       ],
+      sendingSurveyId: '',
+      surveyDlg: false,
+      surveyRow: null,
 
       deleteConfirmDialog: false,
       itemFocusingId: '',
@@ -407,7 +486,7 @@ export default {
     },
     // سود و زیان پروژه
     canSeeProfit() {
-      return this.$access.can('profit.view')
+      return this.$access.isAdmin()
     },
     filteredRows() {
       return this.rows.filter(row =>
@@ -426,6 +505,37 @@ export default {
     openFinance(row) {
       this.financeServiceId = row.id
       this.financeDlg = true
+    },
+    // نمایش نتیجه‌ی نظرسنجی؛ اولین مشاهده توسط مدیر، یادآوری و علامت منو را برطرف می‌کند
+    openSurvey(row) {
+      this.surveyRow = row
+      this.surveyDlg = true
+      if (row.survey.seen_at || !this.canManage) return
+
+      api.post(`installation-service/${row.id}/survey-seen`)
+          .then(response => {
+            if (response.data.data) row.survey.seen_at = response.data.data.seen_at
+          })
+          .catch(() => {})
+    },
+
+    hasMoreActions(row) {
+      return this.canSeeProfit || this.$access.can('installation.print') || this.canManage
+    },
+
+    // ارسال (مجدد) لینک نظرسنجی تکمیل پروژه برای مشتری
+    sendSurvey(row) {
+      this.sendingSurveyId = row.id
+      api.post(`installation-service/${row.id}/send-survey`)
+          .then(response => {
+            this.$q.notify({type: 'positive', position: 'center', timeout: 1500, message: response.data.message})
+            const updated = response.data.data
+            if (updated && updated.survey) row.survey = updated.survey
+          })
+          .catch(error => this.notifyError(error))
+          .finally(() => {
+            this.sendingSurveyId = ''
+          })
     },
     onFinanceChanged({id, final_profit}) {
       const row = this.rows.find(r => r.id === id)
@@ -528,8 +638,7 @@ export default {
       if (!appointment) return 'اطلاعاتی ثبت نشده است'
       const name = appointment.installer ? appointment.installer.name : '-'
       const date = appointment.jalali_date || '-'
-      const time = appointment.start_time ? appointment.start_time.substring(0, 5) : '-'
-      return `${name} | ${date} ساعت ${time}`
+      return `${name} | ${date}`
     },
 
     installerStatusLabel(row, roleKey) {
@@ -680,5 +789,34 @@ export default {
 .legend-box-urgent {
   background-color: rgba(244, 67, 54, 0.1);
   border: 1px solid rgba(244, 67, 54, 0.4);
+}
+
+/* تا جدول از کادر بیرون نزند: سلول‌های پرمحتوا شکسته می‌شوند به جای عریض شدن */
+.install-table :deep(.q-badge) {
+  white-space: normal;
+  text-align: center;
+}
+
+.customer-cell {
+  white-space: normal;
+  min-width: 120px;
+  max-width: 180px;
+}
+
+.installer-badges .q-badge {
+  white-space: normal;
+  line-height: 1.5;
+  min-width: 110px;
+  justify-content: center;
+  max-width: 180px;
+}
+
+.action-cell {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.action-cell :deep(.q-btn__content) {
+  flex-wrap: nowrap;
 }
 </style>

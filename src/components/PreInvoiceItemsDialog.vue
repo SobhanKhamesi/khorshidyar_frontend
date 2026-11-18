@@ -64,10 +64,12 @@
           </q-input>
 
           <div class="text-caption text-grey-8">
-            جمع قیمت خرید: {{ moneyFormat(editPurchaseSum) }} تومان —
-            سود ناخالص این فاکتور: <strong :class="profitClass(Number(editFinalPrice || 0) - editPurchaseSum)">
-            {{ moneyFormat(Number(editFinalPrice || 0) - editPurchaseSum) }}</strong> تومان
-            <span v-if="grossProfit !== null"> (سود ناخالص ثبت شده در فروش موفق ثابت می‌ماند)</span>
+            جمع قیمت خرید: {{ moneyFormat(editPurchaseSum) }} تومان
+            <template v-if="canSeeProfit">
+              — سود ناخالص این فاکتور: <strong :class="profitClass(Number(editFinalPrice || 0) - editPurchaseSum)">
+              {{ moneyFormat(Number(editFinalPrice || 0) - editPurchaseSum) }}</strong> تومان
+              <span v-if="grossProfit !== null"> (سود ناخالص ثبت شده در فروش موفق ثابت می‌ماند)</span>
+            </template>
           </div>
 
           <q-input outlined autogrow type="textarea" v-model="editDescription"
@@ -85,7 +87,7 @@
               <th class="text-center">قیمت خرید واحد</th>
               <th class="text-center">مبلغ واحد</th>
               <th class="text-center">مبلغ کل</th>
-              <th class="text-center">سود ردیف</th>
+              <th v-if="canSeeProfit" class="text-center">سود ردیف</th>
             </tr>
             </thead>
             <tbody>
@@ -99,7 +101,7 @@
               <td class="text-center">{{ item.purchase_price === null || item.purchase_price === undefined ? '-' : moneyFormat(item.purchase_price) }}</td>
               <td class="text-center">{{ moneyFormat(item.price) }}</td>
               <td class="text-center">{{ moneyFormat((item.count || 0) * (item.price || 0)) }}</td>
-              <td class="text-center" :class="profitClass(rowProfit(item))">{{ moneyFormat(rowProfit(item)) }}</td>
+              <td v-if="canSeeProfit" class="text-center" :class="profitClass(rowProfit(item))">{{ moneyFormat(rowProfit(item)) }}</td>
             </tr>
             </tbody>
           </q-markup-table>
@@ -118,7 +120,7 @@
               جمع قیمت خرید: {{ moneyFormat(purchaseSum) }} تومان
             </div>
           </div>
-          <div v-if="grossProfit !== null" class="row justify-end q-mt-xs">
+          <div v-if="canSeeProfit && grossProfit !== null" class="row justify-end q-mt-xs">
             <div class="text-subtitle1">
               سود ناخالص اولیه (ثبت شده در فروش موفق):
               <strong :class="profitClass(grossProfit)">{{ moneyFormat(grossProfit) }}</strong> تومان
@@ -178,6 +180,10 @@ export default {
     }
   },
   computed: {
+    // سود (ناخالص و ردیفی) فقط برای مدیر نمایش داده می‌شود
+    canSeeProfit() {
+      return this.$access.isAdmin()
+    },
     itemsSum() {
       return this.editItems.reduce((sum, i) => sum + (Number(i.count) || 0) * (Number(i.price) || 0), 0)
     },

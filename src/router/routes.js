@@ -12,6 +12,8 @@ const routes = [
         meta: {requireNoAuth: true},
     },
     {path: '/survey/:token', component: () => import('pages/AfterSalesService/Survey.vue')},
+    // نظرسنجی تکمیل پروژه‌ی سرویس نصب (همان صفحه با سوال تکمیل نصب در تاریخ نصب)
+    {path: '/installation-survey/:token', component: () => import('pages/AfterSalesService/Survey.vue'), meta: {surveyKind: 'installation'}},
     // صفحه ثبت نام مشتری با لینک ثابت (برای ارسال به مشتریان / بیو پیج)؛ پس از ثبت، سرنخ ساخته می‌شود (بدون ورود)
     {path: '/register', name: 'Register', component: () => import('pages/Register.vue')},
     // فرم اولیه (درخواست بازدید و پیش‌قرارداد اولیه) که مشتری از طریق لینک پیامک شده تکمیل می‌کند (بدون ورود)

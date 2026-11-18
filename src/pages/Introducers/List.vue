@@ -129,7 +129,7 @@
                   مجموع خرید زیر مجموعه ها :
                   {{ moneyFormat(sumInvoicesPrice) + " تومان " }}
                 </span>
-                <span class="text-positive text-weight-bold">
+                <span v-if="$access.isAdmin()" class="text-positive text-weight-bold">
                   مجموع دریافتی معرف :
                   {{ moneyFormat(sumReferrerIncome) + " تومان " }}
                 </span>
@@ -162,7 +162,7 @@
                 <q-td key="total_purchase" :props="props">
                   {{ moneyFormat(props.row.sum_invoices_price) }}
                 </q-td>
-                <q-td key="referrer_income" :props="props" class="text-positive text-weight-bold">
+                <q-td v-if="$access.isAdmin()" key="referrer_income" :props="props" class="text-positive text-weight-bold">
                   {{ moneyFormat(props.row.referrer_income) }}
                 </q-td>
                 <q-td key="operation" :props="props">
@@ -216,7 +216,7 @@
                     @saved="data => onProjectPercentSaved(props.row, data)"
                   />
                 </q-td>
-                <q-td key="purchase_introducer_income" :props="props" class="text-positive text-weight-bold">
+                <q-td v-if="$access.isAdmin()" key="purchase_introducer_income" :props="props" class="text-positive text-weight-bold">
                   {{ moneyFormat(props.row.purchase_introducer_income) }}
                 </q-td>
                 <q-td key="purchase_date" :props="props">
@@ -469,6 +469,11 @@ export default {
     }
   },
   created() {
+    // مبلغ سهم معرف فقط برای مدیر نمایش داده می‌شود
+    if (!this.$access.isAdmin()) {
+      this.introducesColumns = this.introducesColumns.filter(c => c.name !== 'referrer_income')
+      this.customerBuyDetailsColumns = this.customerBuyDetailsColumns.filter(c => c.name !== 'purchase_introducer_income')
+    }
     this.$q.loading.show({
       spinner: QSpinnerPuff,
       spinnerSize: 140,

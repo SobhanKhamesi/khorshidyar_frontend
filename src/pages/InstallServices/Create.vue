@@ -115,7 +115,7 @@
                     </q-select>
                   </div>
 
-                  <div class="col-md-3 col-xs-6">
+                  <div class="col-md-7 col-xs-12">
                     <q-input mask="####/##/##" outlined dense dir="ltr"
                              v-model="installers[role.key].date" label="تاریخ نصب">
                       <template v-slot:prepend>
@@ -126,34 +126,6 @@
                                     v-model="installers[role.key].date" mask="YYYY-MM-DD">
                               <q-btn v-close-popup color="accent" outline rounded label="بستن"/>
                             </q-date>
-                          </q-popup-proxy>
-                        </q-icon>
-                      </template>
-                    </q-input>
-                  </div>
-
-                  <div class="col-md-2 col-xs-6">
-                    <q-input outlined dense dir="ltr" v-model="installers[role.key].startTime" label="ساعت شروع">
-                      <template v-slot:prepend>
-                        <q-icon name="access_time" class="cursor-pointer">
-                          <q-popup-proxy transition-show="scale" transition-hide="scale">
-                            <q-time v-model="installers[role.key].startTime" format24h>
-                              <q-btn v-close-popup color="accent" outline rounded label="بستن"/>
-                            </q-time>
-                          </q-popup-proxy>
-                        </q-icon>
-                      </template>
-                    </q-input>
-                  </div>
-
-                  <div class="col-md-2 col-xs-6">
-                    <q-input outlined dense dir="ltr" v-model="installers[role.key].endTime" label="ساعت پایان">
-                      <template v-slot:prepend>
-                        <q-icon name="access_time" class="cursor-pointer">
-                          <q-popup-proxy transition-show="scale" transition-hide="scale">
-                            <q-time v-model="installers[role.key].endTime" format24h>
-                              <q-btn v-close-popup color="accent" outline rounded label="بستن"/>
-                            </q-time>
                           </q-popup-proxy>
                         </q-icon>
                       </template>
@@ -396,9 +368,9 @@ export default {
         {key: 'commissioning', label: 'نصاب راه اندازی'}
       ],
       installers: {
-        panel: {installer: null, date: '', startTime: '', endTime: ''},
-        wiring: {installer: null, date: '', startTime: '', endTime: ''},
-        commissioning: {installer: null, date: '', startTime: '', endTime: ''}
+        panel: {installer: null, date: ''},
+        wiring: {installer: null, date: ''},
+        commissioning: {installer: null, date: ''}
       },
       installerOptions: [],
 
@@ -623,9 +595,9 @@ export default {
       this.productDescription = ''
       this.selectedAutomationId = null
       this.installers = {
-        panel: {installer: null, date: '', startTime: '', endTime: ''},
-        wiring: {installer: null, date: '', startTime: '', endTime: ''},
-        commissioning: {installer: null, date: '', startTime: '', endTime: ''}
+        panel: {installer: null, date: ''},
+        wiring: {installer: null, date: ''},
+        commissioning: {installer: null, date: ''}
       }
       this.requiredItems = [{product: null, quantity: 1}]
     },
@@ -639,13 +611,11 @@ export default {
     validateInstallers() {
       for (const role of this.visibleRoles) {
         const item = this.installers[role.key]
-        const hasAny = item.installer || item.date || item.startTime || item.endTime
-        const hasAll = item.installer && item.date && item.startTime && item.endTime
+        const hasAny = item.installer || item.date
+        const hasAll = item.installer && item.date
 
         if (hasAny && !hasAll)
           return this.notifyError(`اطلاعات «${role.label}» را کامل وارد کنید یا کاملاً خالی بگذارید`)
-        if (hasAll && item.startTime >= item.endTime)
-          return this.notifyError(`ساعت پایان «${role.label}» باید بعد از ساعت شروع باشد`)
       }
       return true
     },
@@ -656,10 +626,10 @@ export default {
 
       const anyInstaller = this.visibleRoles.some(role => {
         const item = this.installers[role.key]
-        return item.installer && item.date && item.startTime && item.endTime
+        return item.installer && item.date
       })
       if (!anyInstaller)
-        return this.notifyError('برای ارجاع، حداقل یک نصاب همراه با تاریخ و ساعت نصب انتخاب کنید')
+        return this.notifyError('برای ارجاع، حداقل یک نصاب همراه با تاریخ نصب انتخاب کنید')
 
       if (!this.requiredItemsPayload().length)
         return this.notifyError('اقلام پیش‌نیاز این سرویس نصب را مشخص کنید')
@@ -680,9 +650,7 @@ export default {
       const item = this.installers[roleKey]
       return {
         installer_id: item.installer ? item.installer.id : null,
-        date: item.date,
-        start_time: item.startTime,
-        end_time: item.endTime
+        date: item.date
       }
     },
 

@@ -10,9 +10,9 @@
           <div class="row q-col-gutter-md">
             <div class="col-md-6 col-xs-12 q-gutter-y-md">
 
-              <q-input mask="####/##/##" outlined dir="ltr" v-model="invoiceDate" label="تاریخ">
+              <q-input mask="####/##/##" outlined dir="ltr" v-model="invoiceDate" label="تاریخ" :disable="surveyOnly">
                 <template v-slot:prepend>
-                  <q-icon name="event" class="cursor-pointer">
+                  <q-icon v-if="!surveyOnly" name="event" class="cursor-pointer">
                     <q-popup-proxy transition-show="scale" transition-hide="scale">
                       <q-date today-btn
                               calendar="persian"
@@ -30,6 +30,7 @@
                 option-value="id"
                 outlined
                 v-model="customer_id"
+                :disable="surveyOnly"
                 use-input
                 label="مشتری"
                 :options="customersAndLeadsOptions"
@@ -37,7 +38,7 @@
                 behavior="dialog">
 
                 <template v-slot:after>
-                  <q-btn @click.prevent="newCustomerDlg = true" icon="person_add" dense flat rounded/>
+                  <q-btn v-if="!surveyOnly" @click.prevent="newCustomerDlg = true" icon="person_add" dense flat rounded/>
                 </template>
 
                 <template v-slot:option="scope">
@@ -66,6 +67,7 @@
                        type="number"
                        dir="ltr" maxlength="3"
                        v-model="introducerPercent"
+                       :disable="surveyOnly"
                        label="درصد معرف از این فروش"
               />
             </div>
@@ -75,6 +77,7 @@
                 option-value="id"
                 outlined
                 v-model="expert_id"
+                :disable="surveyOnly"
                 use-input
                 label="کارشناس فنی"
                 :options="technicalExpertOptions"
@@ -95,6 +98,7 @@
               <q-input
                 label="توضیحات درخواست"
                 v-model="description"
+                :disable="surveyOnly"
                 type="textarea"
                 outlined
                 autogrow
@@ -563,6 +567,7 @@ import {api} from 'boot/axios'
 import {VMoney} from 'v-money'
 import CustomerInfoDialog from 'components/CustomerInfoDialog.vue'
 import CustomerSurveyFields from 'components/CustomerSurveyFields.vue'
+import {isTechnicalExpert} from 'src/utils/access'
 
 // نگاشت کلید مصرف‌کننده به برچسب نمایشی (برای ساخت لیست اقلام قطعی برق)
 const consumerLabels = {
@@ -590,6 +595,9 @@ export default {
     return {
       customerInfoDlg: false,
       customerInfoTarget: null,
+
+      // کارشناس فنی فقط نوع و مشخصات فرم بازدید را ویرایش می‌کند
+      surveyOnly: isTechnicalExpert(),
 
       invoiceDate: '',
       customer_id: '',

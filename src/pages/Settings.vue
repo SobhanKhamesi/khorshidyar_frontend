@@ -527,8 +527,13 @@
                 </template>
                 <template v-slot:body="props">
                   <q-tr :props="props">
-                    <q-td key="title" :props="props">
-                      {{ props.row.title }}
+                    <q-td key="title" :props="props" style="white-space: normal; max-width: 260px;">
+                      <div class="text-weight-medium">{{ props.row.title }}</div>
+                      <!-- زمان ارسال قالب‌های سیستمی (از بک‌اند) -->
+                      <div v-if="props.row.hint" class="text-caption text-grey-7 q-mt-xs">
+                        <q-icon name="schedule_send" color="primary" size="14px" class="q-mr-xs"/>{{ props.row.hint }}
+                      </div>
+                      <div v-else class="text-caption text-grey-5 q-mt-xs">ارسال دستی</div>
                     </q-td>
                     <q-td key="description" :props="props" style="white-space: pre-line;">
                       {{ props.row.description }}

@@ -132,3 +132,20 @@ a, a:hover {
   width: 100%;
   border-radius: 15px !important;
 }
+
+/* جدول‌های لیست (اتوماسیون فروش و ...): به جای عریض شدن و بیرون زدن از کادر، محتوای سلول‌ها شکسته می‌شود */
+.compact-table td,
+.compact-table th {
+  white-space: normal;
+}
+
+.compact-table .q-badge {
+  white-space: normal;
+  text-align: center;
+}
+
+/* ستون عملیات: دکمه‌های اصلی در یک خط و بقیه در منوی «⋮» */
+.compact-table td.action-cell {
+  width: 1%;
+  white-space: nowrap;
+}

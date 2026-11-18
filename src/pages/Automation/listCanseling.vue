@@ -9,7 +9,7 @@
 
       <q-card-section>
         <q-table
-            flat bordered class="border-radius-table"
+            flat bordered class="border-radius-table compact-table"
             :loading="loading"
             :rows="rows"
             :filter="filter"
@@ -61,21 +61,6 @@
                   @click.prevent="openCustomerInfo(props.row.customer)"
                   :label="props.row.customer.name" dense flat/>
               </q-td>
-              <q-td key="referrer_percent" :props="props">
-                <template v-if="props.row.customer && props.row.customer.referrer_id">
-                  <referrer-percent-edit
-                    v-model="props.row.referrer_percent"
-                    endpoint="automation/referrer-percent"
-                    :payload="{ id: props.row.id }"
-                    hint="فقط برای همین پروژه اعمال می‌شود"
-                    @saved="data => props.row.referrer_income = data.referrer_income"
-                  />
-                  <div v-if="props.row.referrer_income" class="text-caption text-positive">
-                    {{ Number(props.row.referrer_income).toLocaleString('en-US') }} تومان
-                  </div>
-                </template>
-                <span v-else>-</span>
-              </q-td>
               <q-td key="survey_type" :props="props">
                 <q-badge v-if="props.row.survey_type" :color="surveyTypeColor(props.row.survey_type)">
                   {{ surveyTypeLabel(props.row.survey_type) }}
@@ -94,36 +79,43 @@
                 </span>
               </q-td>
 
-              <q-td key="action" :props="props" class="q-gutter-x-sm">
+              <q-td key="action" :props="props" class="action-cell">
+                <div class="row no-wrap justify-center items-center q-gutter-x-xs">
+                  <q-btn @click.prevent="showComments(props.row.id)" dense round color="blue" icon="forum">
+                    <q-tooltip>کامنت ها</q-tooltip>
+                    <q-badge v-if="props.row.commentsCount > 0" color="negative" floating>
+                      {{ props.row.commentsCount }}
+                    </q-badge>
+                  </q-btn>
+                  <q-btn :to="{ name:'EditAutomation',params:{id:props.row.id} }" dense round color="yellow-9" icon="edit">
+                    <q-tooltip>ویرایش</q-tooltip>
+                  </q-btn>
 
-                <q-btn
-                    v-if="hasSurvey(props.row)"
-                    @click.prevent="showSurveyForm(props.row.id)"
-                    title="نمایش فرم بازدید" dense round color="brown" icon="assignment"/>
-
-                <q-btn
-                    v-if="hasPreInvoiceItems(props.row)"
-                    @click.prevent="showPreInvoiceItems(props.row.id)"
-                    title="نمایش پیش فاکتور" dense round color="deep-purple" icon="list_alt"/>
-
-                <q-btn
-                    v-if="hasContractInfo(props.row)"
-                    @click.prevent="showContractInfo(props.row.id)"
-                    title="نمایش قرارداد و پرداختی ها" dense round color="indigo" icon="receipt_long"/>
-
-                <q-btn
-                    @click.prevent="showComments(props.row.id)"
-                    title="کامنت ها" dense round color="blue" icon="forum">
-                  <q-badge v-if="props.row.commentsCount > 0" color="negative" style="font-size: 18px;" floating>
-                    {{ props.row.commentsCount }}
-                  </q-badge>
-                </q-btn>
-
-                <q-btn v-if="$access.can('sales.print')" :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
-                       color="positive" icon="print"/>
-                <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
-                       :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
-
+                  <!-- سایر عملیات در منو تا ستون عملیات جمع و جور بماند -->
+                  <q-btn dense round flat color="grey-8" icon="more_vert">
+                    <q-tooltip>عملیات بیشتر</q-tooltip>
+                    <q-menu auto-close>
+                      <q-list dense style="min-width: 200px">
+                        <q-item v-if="hasSurvey(props.row)" clickable @click="showSurveyForm(props.row.id)">
+                          <q-item-section avatar><q-icon name="assignment" color="brown"/></q-item-section>
+                          <q-item-section>نمایش فرم بازدید</q-item-section>
+                        </q-item>
+                        <q-item v-if="hasPreInvoiceItems(props.row)" clickable @click="showPreInvoiceItems(props.row.id)">
+                          <q-item-section avatar><q-icon name="list_alt" color="deep-purple"/></q-item-section>
+                          <q-item-section>نمایش پیش فاکتور</q-item-section>
+                        </q-item>
+                        <q-item v-if="hasContractInfo(props.row)" clickable @click="showContractInfo(props.row.id)">
+                          <q-item-section avatar><q-icon name="receipt_long" color="indigo"/></q-item-section>
+                          <q-item-section>نمایش قرارداد و پرداختی ها</q-item-section>
+                        </q-item>
+                        <q-item v-if="$access.can('sales.print')" clickable tag="a" :href="'/v1/print/' + props.row.id" target="_blank">
+                          <q-item-section avatar><q-icon name="print" color="positive"/></q-item-section>
+                          <q-item-section>پرینت</q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                  </q-btn>
+                </div>
               </q-td>
 
             </q-tr>
@@ -231,7 +223,6 @@ import SurveyViewDialog from 'components/SurveyViewDialog.vue'
 import PreInvoiceItemsDialog from 'components/PreInvoiceItemsDialog.vue'
 import ContractInfoDialog from 'components/ContractInfoDialog.vue'
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
-import ReferrerPercentEdit from "components/ReferrerPercentEdit.vue";
 
 
 function wrapCsvValue(val, formatFn) {
@@ -247,7 +238,7 @@ function wrapCsvValue(val, formatFn) {
 
 export default {
   name: "listcanseling",
-  components: {ReferrerPercentEdit, CustomerInfoDialog, SurveyViewDialog, PreInvoiceItemsDialog, ContractInfoDialog},
+  components: {CustomerInfoDialog, SurveyViewDialog, PreInvoiceItemsDialog, ContractInfoDialog},
   data() {
 
     return {
@@ -288,7 +279,6 @@ export default {
         {name: 'sabtKonande', align: 'center', label: 'ثبت شده توسط'},
         {name: 'number', field: 'number', align: 'center', label: 'شماره فاکتور'},
         {name: 'customer_name', field: 'customer_name', align: 'center', label: 'مشتری'},
-        {name: 'referrer_percent', field: 'referrer_percent', align: 'center', label: 'درصد معرف'},
         {name: 'survey_type', field: 'survey_type', align: 'center', label: 'نوع کارشناسی'},
         {name: 'final_price', field: 'final_price', align: 'center', label: 'مبلغ (تومان)'},
         {name: 'date', field: 'date', align: 'center', label: 'تاریخ', sortable: true},

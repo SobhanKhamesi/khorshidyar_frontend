@@ -58,10 +58,16 @@
             <td>{{ c.title }}</td>
             <td class="text-left text-negative">{{ money(-c.amount) }}</td>
           </tr>
-          <tr v-if="data.referrer_amount">
-            <td>سهم معرف ({{ data.referrer_percent }}٪ مبلغ فروش)</td>
-            <td class="text-left text-negative">{{ money(-data.referrer_amount) }}</td>
-          </tr>
+          <template v-if="data.referrer_amount">
+            <tr>
+              <td class="text-weight-medium">سود نهایی قبل از سهم معرف</td>
+              <td class="text-left text-weight-medium" :class="cls(data.profit_before_referrer)">{{ money(data.profit_before_referrer) }}</td>
+            </tr>
+            <tr>
+              <td>سهم معرف ({{ data.referrer_percent }}٪ سود نهایی)</td>
+              <td class="text-left text-negative">{{ money(-data.referrer_amount) }}</td>
+            </tr>
+          </template>
           <tr class="bg-blue-1">
             <td class="text-weight-bold">سود نهایی پروژه</td>
             <td class="text-left text-weight-bold text-subtitle1" :class="cls(data.final_profit)">

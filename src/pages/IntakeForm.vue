@@ -41,7 +41,7 @@
               <h2 class="pc-section__title">{{ toPersian(no) }}. {{ title }}</h2>
 
               <div class="row q-col-gutter-md">
-                <div v-for="q in questionsOf(no)" :key="q.key" :class="colClass(q)" :ref="'q_' + q.key">
+                <div v-for="q in questionsOf(no).filter(isVisible)" :key="q.key" :class="colClass(q)" :ref="'q_' + q.key">
 
                   <!-- چند انتخابی (نوع درخواست) -->
                   <template v-if="q.type === 'multiple'">
@@ -91,7 +91,7 @@
                     <q-btn round dense size="xs" color="negative" icon="close" class="pc-thumb__remove" @click="billImages.splice(i, 1)"/>
                   </div>
                   <q-btn v-if="billImages.length < maxBillImages" outline rounded color="primary" icon="add_a_photo"
-                         label="بارگذاری تصویر" :loading="processingImages" @click="$refs.billInput.click()"/>
+                         label="بارگذاری تصویر" :loading="processingImages" @click="openBillPicker"/>
                   <input ref="billInput" type="file" accept="image/*" multiple hidden @change="onBillImages"/>
                 </div>
                 <div v-if="errors.bill_images" class="text-negative text-caption q-mt-xs">{{ errors.bill_images }}</div>
@@ -190,8 +190,12 @@ export default {
     questionsOf(section) {
       return this.questions.filter(q => String(q.section) === String(section))
     },
+    // سوال وابسته (مثل ظرفیت کولر) فقط وقتی تعداد مربوطه بزرگتر از صفر است نمایش داده می‌شود و اجباری است
+    isVisible(q) {
+      return !q.depends_on || Number(this.toLatin(this.answers[q.depends_on] ?? '')) > 0
+    },
     isRequired(q) {
-      return q.required !== false
+      return q.depends_on ? this.isVisible(q) : q.required !== false
     },
     labelOf(q) {
       return (q.label || q.title) + (this.isRequired(q) ? ' *' : '')
@@ -235,6 +239,12 @@ export default {
     },
 
     // ---------- تصویر قبض / کنتور: پیش از ارسال کوچک و فشرده می‌شود ----------
+    // ورودی فایل داخل v-for بخش‌هاست و در Vue 3 ref آن آرایه است
+    openBillPicker() {
+      const ref = this.$refs.billInput
+      const input = Array.isArray(ref) ? ref[0] : ref
+      if (input) input.click()
+    },
     onBillImages(e) {
       const files = Array.from(e.target.files || []).filter(f => f.type.startsWith('image/'))
       e.target.value = ''
@@ -278,7 +288,7 @@ export default {
     // اعتبارسنجی سمت کاربر (اعتبارسنجی اصلی در بک‌اند انجام می‌شود)
     validate() {
       const errors = {}
-      this.questions.forEach(q => {
+      this.questions.filter(this.isVisible).forEach(q => {
         let value = this.answers[q.key]
         if (typeof value === 'string') value = NUMERIC_TYPES.includes(q.type) ? this.toLatin(value) : value.trim()
         const empty = value === '' || value === null || value === undefined || (Array.isArray(value) && !value.length)
@@ -317,7 +327,7 @@ export default {
       this.questions.forEach(q => {
         const v = this.answers[q.key]
         payload[q.key] = typeof v === 'string' ? (NUMERIC_TYPES.includes(q.type) ? this.toLatin(v) : v.trim()) : v
-        if (payload[q.key] === '') payload[q.key] = null
+        if (payload[q.key] === '' || !this.isVisible(q)) payload[q.key] = null
       })
       payload.bill_images = this.billImages
       payload.agree = true

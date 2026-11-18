@@ -10,7 +10,7 @@
       <q-card-section>
         <q-table
             :loading="loading"
-            flat bordered class="border-radius-table"
+            flat bordered class="border-radius-table compact-table"
             :rows="rows"
             :filter="filter"
             :columns="columns"
@@ -61,21 +61,6 @@
                   @click.prevent="openCustomerInfo(props.row.customer)"
                   :label="props.row.customer.name" dense flat/>
               </q-td>
-              <q-td key="referrer_percent" :props="props">
-                <template v-if="props.row.customer && props.row.customer.referrer_id">
-                  <referrer-percent-edit
-                    v-model="props.row.referrer_percent"
-                    endpoint="automation/referrer-percent"
-                    :payload="{ id: props.row.id }"
-                    hint="فقط برای همین پروژه اعمال می‌شود"
-                    @saved="data => props.row.referrer_income = data.referrer_income"
-                  />
-                  <div v-if="props.row.referrer_income" class="text-caption text-positive">
-                    {{ Number(props.row.referrer_income).toLocaleString('en-US') }} تومان
-                  </div>
-                </template>
-                <span v-else>-</span>
-              </q-td>
               <q-td key="survey_type" :props="props">
                 <q-badge v-if="props.row.survey_type" :color="surveyTypeColor(props.row.survey_type)">
                   {{ surveyTypeLabel(props.row.survey_type) }}
@@ -96,30 +81,45 @@
                        icon="eva-close-circle-outline" rounded dense/>
                 <q-badge v-else label="در انتظار بررسی مدیرفروش" color="orange"/>
               </q-td>
-              <q-td key="action" :props="props" class="q-gutter-x-sm">
+              <q-td key="action" :props="props" class="action-cell">
+                <div class="row no-wrap justify-center items-center q-gutter-x-xs">
+                  <q-btn @click.prevent="showInvoiceItems(props.row.id)" dense round color="deep-purple" icon="list_alt">
+                    <q-tooltip>مشاهده اقلام پیش فاکتور</q-tooltip>
+                  </q-btn>
+                  <q-btn @click.prevent="showComments(props.row.id)" dense round color="blue" icon="forum">
+                    <q-tooltip>کامنت ها</q-tooltip>
+                    <q-badge v-if="props.row.commentsCount > 0" color="negative" floating>
+                      {{ props.row.commentsCount }}
+                    </q-badge>
+                  </q-btn>
 
-                <q-btn
-                  @click.prevent="showInvoiceItems(props.row.id)"
-                  title="مشاهده اقلام پیش فاکتور" dense round color="deep-purple" icon="list_alt"/>
-                <q-btn
-                    @click.prevent="showSurveyForm(props.row.id)"
-                    title="نمایش فرم بازدید" dense round color="brown" icon="assignment"/>
-
-                <q-btn
-                    @click.prevent="showComments(props.row.id)"
-                    title="کامنت ها" dense round color="blue" icon="forum">
-                  <q-badge v-if="props.row.commentsCount > 0" color="negative" style="font-size: 18px;" floating>
-                    {{ props.row.commentsCount }}
-                  </q-badge>
-                </q-btn>
-
-                <q-btn v-if="$access.can('sales.print')" :href="'/v1/print/' + props.row.id" target="_blank" title="پرینت" dense round
-                       color="positive" icon="print"/>
-                <q-btn title="ویرایش" dense round color="yellow-9" icon="edit"
-                       :to="{ name:'EditAutomation',params:{id:props.row.id} }"/>
-                <!-- «حذف» در اتوماسیون یعنی تبدیل به فروش ناموفق (برای صاحب اتوماسیون مجاز است) -->
-                <q-btn title="تبدیل به فروش ناموفق" dense round color="negative" icon="delete"
-                       @click.prevent="deleteConfirmation(props.row.id)"/>
+                  <!-- سایر عملیات در منو تا ستون عملیات جمع و جور بماند -->
+                  <q-btn dense round flat color="grey-8" icon="more_vert">
+                    <q-tooltip>عملیات بیشتر</q-tooltip>
+                    <q-menu auto-close>
+                      <q-list dense style="min-width: 200px">
+                        <q-item clickable @click="showSurveyForm(props.row.id)">
+                          <q-item-section avatar><q-icon name="assignment" color="brown"/></q-item-section>
+                          <q-item-section>نمایش فرم بازدید</q-item-section>
+                        </q-item>
+                        <q-item v-if="$access.can('sales.print')" clickable tag="a" :href="'/v1/print/' + props.row.id" target="_blank">
+                          <q-item-section avatar><q-icon name="print" color="positive"/></q-item-section>
+                          <q-item-section>پرینت</q-item-section>
+                        </q-item>
+                        <q-item clickable :to="{ name:'EditAutomation',params:{id:props.row.id} }">
+                          <q-item-section avatar><q-icon name="edit" color="yellow-9"/></q-item-section>
+                          <q-item-section>ویرایش</q-item-section>
+                        </q-item>
+                        <q-separator/>
+                        <!-- «حذف» در اتوماسیون یعنی تبدیل به فروش ناموفق (برای صاحب اتوماسیون مجاز است) -->
+                        <q-item clickable @click="deleteConfirmation(props.row.id)">
+                          <q-item-section avatar><q-icon name="delete" color="negative"/></q-item-section>
+                          <q-item-section class="text-negative">تبدیل به فروش ناموفق</q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                  </q-btn>
+                </div>
               </q-td>
             </q-tr>
           </template>
@@ -234,7 +234,7 @@
           <div class="q-gutter-y-sm q-mb-md">
             <div v-for="(payment, index) in payments" :key="payment.uid"
                  class="row q-col-gutter-sm items-center">
-              <div class="col-md-3 col-xs-12">
+              <div class="col-md-2 col-xs-12">
                 <q-select dense outlined v-model="payment.method" label="نوع پرداخت"
                           :options="['نقدی', 'کارتخوان', 'واریز به حساب']"/>
               </div>
@@ -242,7 +242,11 @@
                 <q-input dense outlined type="number" dir="ltr" suffix="تومان"
                          v-model.number="payment.amount" label="مبلغ"/>
               </div>
-              <div class="col-md-4 col-xs-6">
+              <div class="col-md-3 col-xs-12">
+                <q-input dense outlined v-model="payment.deposit_account" label="واریز به حساب"
+                         title="حسابی که مبلغ به آن واریز شده"/>
+              </div>
+              <div class="col-md-3 col-xs-6">
                 <q-input dense outlined dir="ltr" mask="####/##/##" v-model="payment.date" label="تاریخ پرداخت">
                   <template v-slot:prepend>
                     <q-icon name="event" class="cursor-pointer">
@@ -255,7 +259,7 @@
                   </template>
                 </q-input>
               </div>
-              <div class="col-md-2 col-xs-12 text-left">
+              <div class="col-md-1 col-xs-12 text-left">
                 <q-btn dense round flat color="negative" icon="delete"
                        @click="removePayment(index)"/>
               </div>
@@ -471,7 +475,6 @@ import {api} from 'boot/axios'
 import SurveyViewDialog from "components/SurveyViewDialog.vue";
 import PreInvoiceItemsDialog from "components/PreInvoiceItemsDialog.vue";
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
-import ReferrerPercentEdit from "components/ReferrerPercentEdit.vue";
 
 
 function wrapCsvValue(val, formatFn) {
@@ -494,7 +497,7 @@ function emptyContractItem() {
 }
 
 function emptyPayment() {
-  return {uid: uid(), method: 'نقدی', amount: null, date: ''}
+  return {uid: uid(), method: 'نقدی', amount: null, deposit_account: '', date: ''}
 }
 
 function emptyCheque() {
@@ -503,7 +506,7 @@ function emptyCheque() {
 
 export default {
   name: "ListPreInvoice",
-  components: {ReferrerPercentEdit, CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog},
+  components: {CustomerInfoDialog, PreInvoiceItemsDialog, SurveyViewDialog},
   data() {
     return {
       customerInfoDlg: false,
@@ -564,7 +567,6 @@ export default {
         {name: 'sabtKonande', align: 'center', label: 'ثبت شده توسط'},
         {name: 'number', field: 'number', align: 'center', label: 'شماره فاکتور' , filterable:true},
         {name: 'customer_name', field: 'customer_name', align: 'center', label: 'مشتری'},
-        {name: 'referrer_percent', field: 'referrer_percent', align: 'center', label: 'درصد معرف'},
         {name: 'survey_type', field: 'survey_type', align: 'center', label: 'نوع کارشناسی'},
         {name: 'final_price', field: 'final_price', align: 'center', label: 'مبلغ (تومان)'},
         {name: 'date', field: 'date', align: 'center', label: 'تاریخ', sortable: true},
@@ -749,7 +751,7 @@ export default {
 
       const payments = this.payments
           .filter(p => p.amount)
-          .map(p => ({amount: p.amount, date: p.date, method: p.method}))
+          .map(p => ({amount: p.amount, date: p.date, method: p.method, deposit_account: p.deposit_account}))
 
       const cheques = this.cheques
           .filter(c => c.amount)
