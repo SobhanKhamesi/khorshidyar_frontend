@@ -12,7 +12,9 @@ const routes = [
         meta: {requireNoAuth: true},
     },
     {path: '/survey/:token', component: () => import('pages/AfterSalesService/Survey.vue')},
-    // فرم اولیه‌ای که مشتری از طریق لینک پیامک شده تکمیل می‌کند (بدون ورود)
+    // صفحه ثبت نام مشتری با لینک ثابت (برای ارسال به مشتریان / بیو پیج)؛ پس از ثبت، سرنخ ساخته می‌شود (بدون ورود)
+    {path: '/register', name: 'Register', component: () => import('pages/Register.vue')},
+    // فرم اولیه (درخواست بازدید و پیش‌قرارداد اولیه) که مشتری از طریق لینک پیامک شده تکمیل می‌کند (بدون ورود)
     {path: '/request/:token', component: () => import('pages/IntakeForm.vue')},
     // مشاهده و امضای دیجیتال قرارداد توسط مشتری (بدون ورود)
     {path: '/contract/:token', component: () => import('pages/ContractSign.vue')},

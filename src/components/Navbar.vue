@@ -54,14 +54,26 @@
 
     <!-- هر بخش فقط برای نقش‌هایی که به آن دسترسی دارند نمایش داده می‌شود (src/utils/access.js) -->
     <q-expansion-item v-if="can('LeadsList')" :content-inset-level="0"
-                      group="side-bar-nav"
-                      icon="bi-person"
-                      label="سرنخ">
+                      group="side-bar-nav">
+      <template v-slot:header>
+        <q-item-section avatar>
+          <q-icon name="bi-person"/>
+        </q-item-section>
+        <q-item-section>سرنخ</q-item-section>
+        <q-item-section side v-if="lead_registration_count > 0">
+          <span class="blink-me">{{ lead_registration_count }}</span>
+        </q-item-section>
+      </template>
       <q-item v-ripple clickable :to="{ name: 'LeadCreate' }">
         <q-item-section>سرنخ جدید</q-item-section>
       </q-item>
       <q-item v-ripple clickable :to="{ name: 'LeadsList' }">
         <q-item-section>لیست سرنخ ها</q-item-section>
+        <!-- سرنخ‌هایی که خود مشتری از صفحه ثبت نام آنلاین ثبت کرده و هنوز دیده نشده‌اند -->
+        <q-item-section side v-if="lead_registration_count > 0">
+          <q-icon name="notifications_active" color="negative" size="20px"
+                  :title="lead_registration_count + ' سرنخ جدید از طریق ثبت نام آنلاین'"/>
+        </q-item-section>
       </q-item>
     </q-expansion-item>
 
@@ -433,6 +445,8 @@ export default defineComponent({
       sum_count: 0,
       // فرم‌های اولیه تکمیل شده توسط مشتری که هنوز در کارتابل دیده نشده‌اند
       intake_form_count: 0,
+      // سرنخ‌های ثبت نام آنلاین که هنوز در لیست سرنخ ها دیده نشده‌اند
+      lead_registration_count: 0,
       // قراردادهایی که مشتری امضا کرده و هنوز در کارتابل دیده نشده‌اند
       contract_signed_count: 0,
       // نظرسنجی‌های ضعیف خدمات پس از فروش که هنوز بررسی نشده‌اند
@@ -477,6 +491,7 @@ export default defineComponent({
             this.installation_service_count = response.data.data.installation_service_count
 
             this.intake_form_count = response.data.data.intake_form_count || 0
+            this.lead_registration_count = response.data.data.lead_registration_count || 0
             this.contract_signed_count = response.data.data.contract_signed_count || 0
             // نظرسنجی‌های ضعیف (امتیاز ۰ تا ۲) که دلیل نارضایتی‌شان هنوز بررسی نشده
             this.poor_rating_count = response.data.data.poor_rating_count || 0

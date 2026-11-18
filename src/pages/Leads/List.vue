@@ -33,6 +33,13 @@
                   size="13px"
                   icon="ti-export"
                   @click="exportTable()"/>
+              <!-- لینک ثابت صفحه ثبت نام مشتری (برای ارسال به مشتریان یا قرار دادن در بیو پیج) -->
+              <q-btn
+                  rounded
+                  color="deep-orange"
+                  icon="link"
+                  label="کپی لینک ثبت نام"
+                  @click="copyRegisterLink()"/>
             </div>
           </template>
 
@@ -144,6 +151,14 @@
                 <q-badge color="teal">
                   {{ props.row.fullName }}
                 </q-badge>
+                <!-- سرنخی که خود مشتری از صفحه ثبت نام آنلاین ثبت کرده -->
+                <div v-if="props.row.registration" class="q-mt-xs">
+                  <q-badge class="cursor-pointer" color="deep-orange" label="فرم ثبت نام آنلاین"
+                           @click="showRegistration(props.row)"/>
+                  <q-icon v-if="!props.row.registration.seen_at"
+                          name="notifications_active" color="negative" size="18px" class="q-ml-xs"
+                          title="ثبت نام جدید، هنوز بررسی نشده"/>
+                </div>
               </q-td>
               <q-td key="contact_number" :props="props">
                 {{ props.row.contact_number }}
@@ -465,6 +480,9 @@
     <!-- ============ دیالوگ مشخصات سرنخ ============ -->
     <CustomerInfoDialog v-model="detailsDlg" :customer="detailsRow"/>
 
+    <!-- ============ دیالوگ فرم ثبت نام آنلاین ============ -->
+    <RegistrationViewDialog v-model="registrationDlg" :customer-id="registrationCustomerId" @seen="markRegistrationSeen"/>
+
     <q-dialog v-model="deleteConfirmDialog"
               :maximized="!$q.screen.gt.sm"
               :full-width="!$q.screen.gt.sm"
@@ -496,10 +514,11 @@
 <script>
 import {api} from 'boot/axios'
 import {QSpinnerPuff} from "quasar";
-import {exportFile} from 'quasar'
+import {exportFile, copyToClipboard} from 'quasar'
 import {sumArray} from "table/dist/src/utils";
 import CustomerInfoDialog from "components/CustomerInfoDialog.vue";
 import ReferrerPercentEdit from "components/ReferrerPercentEdit.vue";
+import RegistrationViewDialog from "components/RegistrationViewDialog.vue";
 
 function wrapCsvValue(val, formatFn) {
   let formatted = formatFn !== void 0
@@ -514,7 +533,7 @@ function wrapCsvValue(val, formatFn) {
 
 export default {
   name: "LeadsList",
-  components: {CustomerInfoDialog, ReferrerPercentEdit},
+  components: {CustomerInfoDialog, ReferrerPercentEdit, RegistrationViewDialog},
   watch: {
     customerCategory: function () {
       this.applyFilters()
@@ -548,6 +567,8 @@ export default {
       ],
 
       deleteConfirmDialog: false,
+      registrationDlg: false,
+      registrationCustomerId: '',
       itemFocusingId: '',
       itemFocusingType: '',
       listCallTrackingDlg: false,
@@ -640,6 +661,22 @@ export default {
   },
   methods: {
     sumArray,
+    // ---------- ثبت نام آنلاین ----------
+    copyRegisterLink() {
+      const link = window.location.origin + this.$router.resolve({name: 'Register'}).href
+      copyToClipboard(link).then(() => {
+        this.$q.notify({type: 'positive', position: 'center', message: 'لینک صفحه ثبت نام کپی شد', caption: link})
+      })
+    },
+    showRegistration(row) {
+      this.registrationCustomerId = row.id
+      this.registrationDlg = true
+    },
+    markRegistrationSeen(customerId) {
+      [...(this.noFilterRows || []), ...(this.rows || [])].forEach(r => {
+        if (r.id === customerId && r.registration && !r.registration.seen_at) r.registration.seen_at = new Date().toISOString()
+      })
+    },
     moneyFormat(digits) {
       return (("" + digits).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"));
     },

@@ -276,6 +276,21 @@
             </tr>
             </tbody>
           </q-markup-table>
+
+          <!-- تصویر قبض برق / کنتور که مشتری در فرم اولیه بارگذاری کرده -->
+          <div v-if="customerImages.length" class="q-mt-md">
+            <div class="text-subtitle2 text-grey-8 q-mb-xs">تصویر قبض برق / کنتور</div>
+            <div class="row q-gutter-sm">
+              <a v-for="(img, i) in customerImages" :key="i" :href="img" target="_blank" :download="'bill-' + (i + 1) + '.jpg'">
+                <q-img :src="img" style="width: 140px; height: 140px; border-radius: 8px" fit="cover"/>
+              </a>
+            </div>
+          </div>
+
+          <div v-if="customerSignature" class="q-mt-md">
+            <div class="text-subtitle2 text-grey-8 q-mb-xs">امضای متقاضی</div>
+            <img :src="customerSignature" alt="امضای متقاضی" style="max-width: 260px; max-height: 120px"/>
+          </div>
         </div>
 
         <div v-else class="text-center text-grey q-pa-lg">
@@ -325,7 +340,9 @@ export default {
       surveyType: null,
       home: null,
       industrial: null,
-      customer: null
+      customer: null,
+      customerImages: [],
+      customerSignature: ''
     }
   },
   watch: {
@@ -368,6 +385,8 @@ export default {
       this.home = null
       this.industrial = null
       this.customer = null
+      this.customerImages = []
+      this.customerSignature = ''
 
       api.get('automation/' + this.automationId)
           .then(response => {
@@ -421,6 +440,8 @@ export default {
             } else if (data.survey_type === 3 && data.customer_survey) {
               // ردیف‌های «عنوان / مقدار» از بک‌اند می‌آید
               this.customer = data.customer_survey.rows
+              this.customerImages = data.customer_survey.bill_images || []
+              this.customerSignature = data.customer_survey.signature || ''
             } else if (data.survey_type === 2 && data.industrial_survey) {
               const s = data.industrial_survey
               this.industrial = {

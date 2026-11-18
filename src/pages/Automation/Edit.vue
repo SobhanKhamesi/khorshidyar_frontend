@@ -970,8 +970,9 @@ export default {
           }
           // فرم ثبت شده از مشتری (حتی اگر نوع فعلی چیز دیگری باشد، برای جابه‌جایی بین انواع حفظ می‌شود)
           if (data.customer_survey) {
-            const {id, automation_id, rows, created_at, updated_at, ...answers} = data.customer_survey
-            this.customerSurvey = {...answers, surface_material: answers.surface_material || []}
+            // تصویر قبض، امضا و تاییدیه مشتری در سامانه ویرایش نمی‌شوند و همراه فرم ارسال نمی‌شوند
+            const {id, automation_id, rows, created_at, updated_at, bill_images, signature, signer_name, agreed_at, jalali_agreed_at, ...answers} = data.customer_survey
+            this.customerSurvey = {...answers, request_types: answers.request_types || []}
           }
         })
     },

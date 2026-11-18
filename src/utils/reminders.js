@@ -6,6 +6,7 @@ export const REMINDER_TYPES = {
   INTAKE_FORM: 2,
   CONTRACT_SIGNED: 3,
   POOR_RATING: 4,
+  LEAD_REGISTERED: 5,
 }
 
 const META = {
@@ -22,6 +23,10 @@ const META = {
   [REMINDER_TYPES.POOR_RATING]: {
     label: 'نظرسنجی ضعیف', icon: 'sentiment_very_dissatisfied', color: 'negative',
     route: {name: 'AfterSalesServiceList', query: {poor: '1'}}
+  },
+  [REMINDER_TYPES.LEAD_REGISTERED]: {
+    label: 'ثبت نام آنلاین', icon: 'person_add', color: 'deep-orange',
+    route: {name: 'LeadsList'}
   },
 }
 

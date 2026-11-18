@@ -7,7 +7,7 @@
       <div v-for="q in questions" :key="q.key"
            :class="['textarea', 'single', 'multiple'].includes(q.type) && (q.options || []).length > 3 || q.type === 'textarea' ? 'col-12' : 'col-md-6 col-xs-12'">
 
-        <q-input v-if="['text', 'national_code', 'digits', 'mobile'].includes(q.type)"
+        <q-input v-if="['text', 'national_code', 'digits', 'mobile', 'phone'].includes(q.type)"
                  outlined :dir="q.type === 'text' ? 'rtl' : 'ltr'"
                  v-model="modelValue[q.key]" :label="q.label || q.title" :placeholder="q.placeholder"/>
 
@@ -41,7 +41,7 @@ let cachedQuestions = null
 
 /**
  * فیلدهای فرم بازدید نوع «ثبت شده از مشتری» برای ثبت/ویرایش در سامانه.
- * سوالات همان سوالات فرم اولیه‌ای است که مشتری از طریق لینک تکمیل می‌کند.
+ * سوالات همان سوالات فرم اولیه (درخواست بازدید و پیش‌قرارداد اولیه) است که مشتری از طریق لینک تکمیل می‌کند.
  * modelValue یک آبجکت با کلیدهای سوالات است و مستقیماً مقداردهی می‌شود.
  */
 export default {
